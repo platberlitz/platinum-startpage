@@ -762,6 +762,19 @@
  <div class="settings-group">
  <span class="settings-label">Glass Mode</span>
  <div id="glassToggle" class="toggle-switch" onclick="toggleGlassMode()"></div>
+
+ <div id="glassCustomization" style="display: none; margin-top: 15px;">
+ <label class="settings-label">Glass Tint Color:</label>
+ <input type="color" id="glassColor" value="#ffffff" onchange="updateGlassColor(this.value)">
+
+ <label class="settings-label" style="margin-top: 10px;">Glass Opacity:</label>
+ <input type="range" class="slider" min="0" max="50" value="10" oninput="updateGlassOpacity(this.value); document.getElementById('glassOpacity').textContent = this.value">
+ <span id="glassOpacity">10</span>%
+
+ <label class="settings-label" style="margin-top: 10px;">Glass Blur:</label>
+ <input type="range" class="slider" min="5" max="40" value="20" oninput="updateGlassBlur(this.value); document.getElementById('glassBlur').textContent = this.value">
+ <span id="glassBlur">20</span>px
+ </div>
  </div>
 
  <div class="settings-group">
@@ -821,7 +834,7 @@
  <div class="settings-group">
  <label class="settings-label">Slideshow Images:</label>
  <input type="file" accept="image/*" multiple onchange="uploadSlides(event)">
- <p style="font-size: 11px; opacity: 0.7; margin-top: 5px;">Compressed to 300px @ 20% quality<br>⚠️ Limit: 50 images max<br>Check console (F12) for compression details</p>
+ <p style="font-size: 11px; opacity: 0.7; margin-top: 5px;">Compressed to 700px @ 75% quality<br>Recommended: 40-80 images</p>
  </div>
 
  <div class="settings-group" style="border-bottom: none;">
@@ -993,7 +1006,7 @@ function checkLocalStorageQuota() {
  return -1;
  } catch (e) {
  console.error('localStorage is not available:', e);
- alert('WARNING: localStorage is disabled or restricted.');
+ alert('WARNING: localStorage is disabled or restricted.\n\nIn Firefox:\n1. Type about:config in address bar\n2. Search for: dom.storage.enabled\n3. Make sure it\'s set to true\n\nOr check if you\'re in Private Browsing mode.');
  return 0;
  }
 }
@@ -1070,7 +1083,7 @@ function toggleLayoutMode() {
  if (layoutMode) {
  toggle.classList.add('active');
  grid.classList.add('active');
- console.log('Edit mode ENABLED');
+ console.log('Edit mode ENABLED - you can now drag and resize cards');
  } else {
  toggle.classList.remove('active');
  grid.classList.remove('active');
@@ -1081,7 +1094,7 @@ function toggleLayoutMode() {
  try {
  localStorage.setItem('layoutMode', layoutMode);
  } catch (e) {
- console.warn('Could not save layout mode:', e);
+ console.warn('Could not save layout mode to localStorage:', e);
  }
 }
 
@@ -1329,6 +1342,12 @@ function toggleGlassMode() {
  toggle.classList.toggle('active');
  const isGlassy = toggle.classList.contains('active');
 
+ // Show/hide glass customization options
+ const glassCustomization = document.getElementById('glassCustomization');
+ if (glassCustomization) {
+ glassCustomization.style.display = isGlassy ? 'block' : 'none';
+ }
+
  document.querySelectorAll('.card').forEach(card => {
  if (isGlassy) {
  card.classList.add('glassy');
@@ -1352,7 +1371,7 @@ function toggleGlassMode() {
  try {
  localStorage.setItem('glassMode', isGlassy);
  } catch (e) {
- console.warn('Could not save glass mode:', e);
+ console.warn('Could not save glass mode to localStorage:', e);
  }
 }
 
@@ -1482,7 +1501,7 @@ function uploadSlides(event) {
  }
 
  if (files.length > 100) {
- if (!confirm(`You selected ${files.length} images. This may exceed storage limits.\n\nRecommended: 50-80 images max.\n\nContinue anyway?`)) {
+ if (!confirm(`You selected ${files.length} images. This may exceed storage limits.\n\nRecommended: 40-80 images max.\n\nContinue anyway?`)) {
  event.target.value = '';
  return;
  }
@@ -1518,8 +1537,8 @@ function uploadSlides(event) {
 
  console.log('🔄 About to call compressImage…');
 
- // Better quality: 700px wide, 60% quality
- compressImage(originalDataUrl, 700, 0.60, function(compressedDataUrl) {
+ // Better quality: 700px wide, 75% quality
+ compressImage(originalDataUrl, 700, 0.75, function(compressedDataUrl) {
  console.log('✓ Callback received, compressed length:', (compressedDataUrl.length/1024).toFixed(1) + 'KB');
 
  totalCompressedSize += compressedDataUrl.length;
@@ -1690,6 +1709,71 @@ function updateCardStyle(rgb, opacity) {
  document.head.appendChild(styleEl);
  }
  styleEl.textContent = '.card:not(.glassy) { background: rgba(' + rgb.r + ', ' + rgb.g + ', ' + rgb.b + ', ' + opacity + ') !important; }';
+}
+
+function updateGlassColor(color) {
+ const opacity = document.getElementById('glassOpacity') ? document.getElementById('glassOpacity').textContent / 100 : 0.1;
+ const blur = document.getElementById('glassBlur') ? document.getElementById('glassBlur').textContent : 20;
+ const rgb = hexToRgb(color);
+ updateGlassStyle(rgb, opacity, blur);
+ try {
+ localStorage.setItem('glassColor', color);
+ } catch (e) {
+ console.warn('Could not save glass color:', e);
+ }
+}
+
+function updateGlassOpacity(value) {
+ const color = document.getElementById('glassColor') ? document.getElementById('glassColor').value : '#ffffff';
+ const blur = document.getElementById('glassBlur') ? document.getElementById('glassBlur').textContent : 20;
+ const rgb = hexToRgb(color);
+ updateGlassStyle(rgb, value / 100, blur);
+ try {
+ localStorage.setItem('glassOpacity', value);
+ } catch (e) {
+ console.warn('Could not save glass opacity:', e);
+ }
+}
+
+function updateGlassBlur(value) {
+ const color = document.getElementById('glassColor') ? document.getElementById('glassColor').value : '#ffffff';
+ const opacity = document.getElementById('glassOpacity') ? document.getElementById('glassOpacity').textContent / 100 : 0.1;
+ const rgb = hexToRgb(color);
+ updateGlassStyle(rgb, opacity, value);
+ try {
+ localStorage.setItem('glassBlur', value);
+ } catch (e) {
+ console.warn('Could not save glass blur:', e);
+ }
+}
+
+function updateGlassStyle(rgb, opacity, blur) {
+ let styleEl = document.getElementById('glass-style');
+ if (!styleEl) {
+ styleEl = document.createElement('style');
+ styleEl.id = 'glass-style';
+ document.head.appendChild(styleEl);
+ }
+ styleEl.textContent = `
+ .card.glassy {
+ background: rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${opacity}) !important;
+ backdrop-filter: blur(${blur}px) !important;
+ -webkit-backdrop-filter: blur(${blur}px) !important;
+ }
+ .side-menu.glassy {
+ background: rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${opacity}) !important;
+ backdrop-filter: blur(${blur}px) !important;
+ }
+ .settings-panel.glassy {
+ background: rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${opacity}) !important;
+ backdrop-filter: blur(${blur}px) !important;
+ }
+ .settings-btn.glassy,
+ .menu-trigger.glassy {
+ background: rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${opacity}) !important;
+ backdrop-filter: blur(${blur}px) !important;
+ }
+ `;
 }
 
 function hexToRgb(hex) {
@@ -1999,6 +2083,49 @@ function loadSettings() {
  const el = document.getElementById(id);
  if (el) el.classList.add('glassy');
  });
+ }
+
+ // Glass mode customization
+ const glassColor = localStorage.getItem('glassColor');
+ if (glassColor) {
+ const glassColorInput = document.getElementById('glassColor');
+ if (glassColorInput) {
+ glassColorInput.value = glassColor;
+ }
+ }
+
+ const glassOpacity = localStorage.getItem('glassOpacity');
+ if (glassOpacity) {
+ const glassOpacitySlider = document.querySelector('input[oninput*="updateGlassOpacity"]');
+ if (glassOpacitySlider) {
+ glassOpacitySlider.value = glassOpacity;
+ const glassOpacitySpan = document.getElementById('glassOpacity');
+ if (glassOpacitySpan) glassOpacitySpan.textContent = glassOpacity;
+ }
+ }
+
+ const glassBlur = localStorage.getItem('glassBlur');
+ if (glassBlur) {
+ const glassBlurSlider = document.querySelector('input[oninput*="updateGlassBlur"]');
+ if (glassBlurSlider) {
+ glassBlurSlider.value = glassBlur;
+ const glassBlurSpan = document.getElementById('glassBlur');
+ if (glassBlurSpan) glassBlurSpan.textContent = glassBlur;
+ }
+ }
+
+ // Apply saved glass style if glass mode is active
+ if (glassMode && glassColor) {
+ const opacity = glassOpacity ? glassOpacity / 100 : 0.1;
+ const blur = glassBlur || 20;
+ const rgb = hexToRgb(glassColor);
+ updateGlassStyle(rgb, opacity, blur);
+
+ // Show glass customization panel
+ const glassCustomization = document.getElementById('glassCustomization');
+ if (glassCustomization) {
+ glassCustomization.style.display = 'block';
+ }
  }
 
  const textMode = localStorage.getItem('textMode') || 'dark';
