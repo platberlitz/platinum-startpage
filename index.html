@@ -1838,7 +1838,11 @@ async function fetchNews(feed) {
   }
 
   const feeds = {
-    international: ['https://feeds.bbci.co.uk/news/world/rss.xml'],
+    international: [
+      'https://feeds.bbci.co.uk/news/world/rss.xml',
+      'https://rss.nytimes.com/services/xml/rss/nyt/World.xml',
+      'https://www.theguardian.com/world/rss'
+    ],
     philippines: [
       'https://www.rappler.com/feed/',
       'https://newsinfo.inquirer.net/feed',
@@ -1849,6 +1853,8 @@ async function fetchNews(feed) {
   const feedUrls = feeds[feed];
   const sourceNames = {
     'https://feeds.bbci.co.uk/news/world/rss.xml': 'BBC News',
+    'https://rss.nytimes.com/services/xml/rss/nyt/World.xml': 'NY Times',
+    'https://www.theguardian.com/world/rss': 'The Guardian',
     'https://www.rappler.com/feed/': 'Rappler',
     'https://newsinfo.inquirer.net/feed': 'Inquirer',
     'https://www.gmanetwork.com/news/rss/news': 'GMA News'
@@ -1878,7 +1884,7 @@ async function fetchNews(feed) {
   const proxies = [
     url => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
     url => `https://corsproxy.io/?${encodeURIComponent(url)}`,
-    url => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`
+    url => `https://thingproxy.freeboard.io/fetch/${url}`
   ];
 
   // Try each feed URL with each proxy
