@@ -1,0 +1,2442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Startpage</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* CSS Variables for theming */
+:root {
+  --bg-blur: 0px;
+  --card-bg: rgba(30, 30, 35, 0.85);
+  --card-blur: 12px;
+  --card-border: rgba(255, 255, 255, 0.08);
+  --text-primary: rgba(255, 255, 255, 0.95);
+  --text-secondary: rgba(255, 255, 255, 0.6);
+  --accent: #6366f1;
+  --accent-hover: #818cf8;
+  --card-base-r: 30;
+  --card-base-g: 30;
+  --card-base-b: 35;
+  --font-scale: 1;
+}
+
+html {
+  font-size: calc(16px * var(--font-scale));
+}
+
+/* Menlo font with fallbacks */
+@font-face {
+  font-family: 'Menlo';
+  src: local('Menlo'), local('Monaco'), local('Consolas');
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Figtree', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  height: 100vh;
+  background: #0a0a0f url('') center/cover fixed no-repeat;
+  color: var(--text-primary);
+  overflow: hidden;
+}
+
+/* Background blur overlay */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  backdrop-filter: blur(var(--bg-blur));
+  -webkit-backdrop-filter: blur(var(--bg-blur));
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* Main container */
+.main-container {
+  position: relative;
+  z-index: 1;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 10px;
+  height: 100vh;
+  box-sizing: border-box;
+}
+
+/* Grid Layout */
+.grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-rows: auto auto 1fr auto;
+  grid-template-areas:
+    "search search search"
+    "weather timezones links"
+    "slideshow notes news"
+    "emoticon quote quote";
+  height: calc(100vh - 20px);
+}
+
+/* Card styling */
+.card {
+  background: var(--card-bg);
+  backdrop-filter: blur(var(--card-blur));
+  -webkit-backdrop-filter: blur(var(--card-blur));
+  border: 1px solid var(--card-border);
+  border-radius: 10px;
+  padding: 10px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+/* Search Card */
+.search-card {
+  grid-area: search;
+  padding: 12px;
+}
+
+.search-form {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.search-input {
+  flex: 1;
+  padding: 10px 14px;
+  font-size: 13px;
+  font-family: inherit;
+  background: rgba(255, 255, 255, 0.05);
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  color: var(--text-primary);
+  outline: none;
+  transition: all 0.3s ease;
+}
+
+.search-input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.2);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.search-input::placeholder {
+  color: var(--text-secondary);
+}
+
+.search-btn {
+  padding: 10px 20px;
+  font-size: 12px;
+  font-family: inherit;
+  font-weight: 600;
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.search-btn:hover {
+  background: var(--accent-hover);
+  transform: scale(1.02);
+}
+
+/* Quote Card */
+.quote-card {
+  grid-area: quote;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 16px;
+}
+
+.quote-text {
+  font-size: 0.8em;
+  font-style: italic;
+  color: var(--text-secondary);
+  line-height: 1.4;
+  text-align: center;
+  animation: fadeIn 1s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Timezone Card */
+.timezone-card {
+  grid-area: timezones;
+  overflow-y: auto;
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--card-border);
+}
+
+.card-title {
+  font-size: 0.75em;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-secondary);
+}
+
+.add-btn {
+  padding: 4px 8px;
+  font-size: 11px;
+  font-family: inherit;
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-primary);
+  border: 1px solid var(--card-border);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.add-btn:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.timezone-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.timezone-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 8px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 6px;
+}
+
+.timezone-info {
+  flex: 1;
+}
+
+.timezone-city {
+  font-size: 0.75em;
+  font-weight: 500;
+  margin-bottom: 2px;
+}
+
+.timezone-time {
+  font-size: 1.1em;
+  font-weight: 600;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+
+.timezone-date {
+  font-size: 0.65em;
+  color: var(--text-secondary);
+  margin-top: 1px;
+}
+
+.remove-btn {
+  padding: 4px 8px;
+  font-size: 14px;
+  background: transparent;
+  color: var(--text-secondary);
+  border: none;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.2s, color 0.2s;
+}
+
+.timezone-item:hover .remove-btn {
+  opacity: 1;
+}
+
+.remove-btn:hover {
+  color: #ef4444;
+}
+
+/* Slideshow Card */
+.slideshow-card {
+  grid-area: slideshow;
+  padding: 0;
+  overflow: hidden;
+  position: relative;
+}
+
+.slideshow-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.slide {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  transition: opacity 1.5s ease-in-out;
+}
+
+.slide.active {
+  opacity: 1;
+}
+
+.slideshow-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.5);
+  opacity: 0;
+  transition: opacity 0.3s;
+  cursor: pointer;
+}
+
+.slideshow-card:hover .slideshow-overlay {
+  opacity: 1;
+}
+
+.slideshow-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--text-secondary);
+  font-size: 0.75em;
+}
+
+/* Notes Card */
+.notes-card {
+  grid-area: notes;
+  display: flex;
+  flex-direction: column;
+}
+
+.notes-textarea {
+  flex: 1;
+  width: 100%;
+  padding: 8px;
+  font-family: inherit;
+  font-size: 0.8em;
+  line-height: 1.5;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--card-border);
+  border-radius: 6px;
+  color: var(--text-primary);
+  resize: none;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.notes-textarea:focus {
+  border-color: var(--accent);
+}
+
+.notes-textarea::placeholder {
+  color: var(--text-secondary);
+}
+
+.save-indicator {
+  font-size: 0.65em;
+  color: var(--text-secondary);
+  margin-top: 4px;
+  text-align: right;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.save-indicator.visible {
+  opacity: 1;
+}
+
+/* News Card */
+.news-card {
+  grid-area: news;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.news-tabs {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.news-tab {
+  padding: 5px 10px;
+  font-size: 0.7em;
+  font-family: inherit;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-secondary);
+  border: 1px solid transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.news-tab:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.news-tab.active {
+  background: var(--accent);
+  color: white;
+}
+
+.news-content {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.news-item {
+  display: block;
+  padding: 8px;
+  margin-bottom: 4px;
+  background: rgba(255, 255, 255, 0.03);
+  border-left: 2px solid var(--accent);
+  border-radius: 0 6px 6px 0;
+  text-decoration: none;
+  color: inherit;
+  transition: all 0.2s;
+}
+
+.news-item:hover {
+  background: rgba(255, 255, 255, 0.06);
+  transform: translateX(4px);
+}
+
+.news-title {
+  font-size: 0.75em;
+  font-weight: 500;
+  margin-bottom: 2px;
+  line-height: 1.3;
+}
+
+.news-meta {
+  font-size: 0.6em;
+  color: var(--text-secondary);
+}
+
+/* Emoticon Card */
+.emoticon-card {
+  grid-area: emoticon;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.5em;
+  cursor: pointer;
+  user-select: none;
+}
+
+/* Weather Card */
+.weather-card {
+  grid-area: weather;
+  display: flex;
+  flex-direction: column;
+}
+
+.weather-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+}
+
+.weather-icon {
+  font-size: 2.5em;
+}
+
+.weather-info {
+  flex: 1;
+}
+
+.weather-temp {
+  font-size: 1.8em;
+  font-weight: 600;
+  color: var(--accent);
+}
+
+.weather-condition {
+  font-size: 0.75em;
+  color: var(--text-secondary);
+}
+
+.weather-location {
+  font-size: 0.7em;
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+
+/* Quick Links Card */
+.links-card {
+  grid-area: links;
+  display: flex;
+  flex-direction: column;
+}
+
+.links-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  flex: 1;
+  align-content: start;
+}
+
+.link-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--card-border);
+  border-radius: 8px;
+  color: var(--text-primary);
+  text-decoration: none;
+  font-size: 0.75em;
+  transition: all 0.2s;
+}
+
+.link-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  transform: translateY(-2px);
+}
+
+.link-icon {
+  font-size: 1.2em;
+}
+
+/* Font Size Controls */
+.font-size-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.font-size-btn {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--card-border);
+  border-radius: 6px;
+  color: var(--text-primary);
+  font-size: 1.1em;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.font-size-btn:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.font-size-value {
+  font-size: 0.85em;
+  color: var(--accent);
+  min-width: 45px;
+  text-align: center;
+}
+
+/* Theme Preset Select */
+.theme-select {
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 0.85em;
+  font-family: inherit;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--card-border);
+  border-radius: 8px;
+  color: var(--text-primary);
+  cursor: pointer;
+  outline: none;
+}
+
+.theme-select option {
+  background: #1a1a1f;
+}
+
+/* Settings Button */
+.settings-btn {
+  position: fixed;
+  bottom: 10px;
+  right: 10px;
+  width: 40px;
+  height: 40px;
+  background: var(--card-bg);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--card-border);
+  border-radius: 50%;
+  color: var(--text-primary);
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.3s;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.settings-btn:hover {
+  transform: rotate(90deg);
+  background: rgba(99, 102, 241, 0.3);
+}
+
+/* Settings Panel */
+.settings-panel {
+  position: fixed;
+  top: 0;
+  right: -400px;
+  width: 380px;
+  height: 100vh;
+  background: rgba(20, 20, 25, 0.95);
+  backdrop-filter: blur(20px);
+  border-left: 1px solid var(--card-border);
+  padding: 24px;
+  overflow-y: auto;
+  transition: right 0.3s ease;
+  z-index: 200;
+}
+
+.settings-panel.open {
+  right: 0;
+}
+
+.settings-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--card-border);
+}
+
+.settings-title {
+  font-size: 1.2em;
+  font-weight: 600;
+}
+
+.close-btn {
+  padding: 8px;
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 20px;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.close-btn:hover {
+  color: var(--text-primary);
+}
+
+.settings-section {
+  margin-bottom: 24px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--card-border);
+}
+
+.settings-section:last-child {
+  border-bottom: none;
+}
+
+.section-title {
+  font-size: 0.8em;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-secondary);
+  margin-bottom: 16px;
+}
+
+.setting-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.setting-label {
+  font-size: 0.85em;
+}
+
+.slider-container {
+  margin-bottom: 16px;
+}
+
+.slider-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.slider-value {
+  font-size: 0.85em;
+  color: var(--accent);
+}
+
+input[type="range"] {
+  width: 100%;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+  outline: none;
+  -webkit-appearance: none;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 18px;
+  height: 18px;
+  background: var(--accent);
+  border-radius: 50%;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+input[type="range"]::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+}
+
+input[type="file"] {
+  width: 100%;
+  padding: 10px;
+  font-size: 0.85em;
+  font-family: inherit;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px dashed var(--card-border);
+  border-radius: 8px;
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+.btn {
+  padding: 10px 20px;
+  font-size: 0.85em;
+  font-family: inherit;
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-primary);
+  border: 1px solid var(--card-border);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.btn-danger {
+  background: rgba(239, 68, 68, 0.2);
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
+.btn-danger:hover {
+  background: rgba(239, 68, 68, 0.3);
+}
+
+.btn-block {
+  width: 100%;
+  margin-bottom: 8px;
+}
+
+.storage-info {
+  font-size: 0.75em;
+  color: var(--text-secondary);
+  text-align: center;
+  margin-top: 8px;
+}
+
+/* Modal */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 300;
+}
+
+.modal-overlay.open {
+  display: flex;
+}
+
+.modal {
+  background: rgba(30, 30, 35, 0.98);
+  border: 1px solid var(--card-border);
+  border-radius: 16px;
+  padding: 24px;
+  width: 90%;
+  max-width: 400px;
+}
+
+.modal-title {
+  font-size: 1.1em;
+  font-weight: 600;
+  margin-bottom: 16px;
+}
+
+.modal select {
+  width: 100%;
+  padding: 12px;
+  font-size: 0.9em;
+  font-family: inherit;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--card-border);
+  border-radius: 8px;
+  color: var(--text-primary);
+  margin-bottom: 16px;
+  outline: none;
+}
+
+.modal select option {
+  background: #1a1a1f;
+}
+
+/* Layout Editor */
+.layout-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.layout-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.layout-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.layout-cell label {
+  font-size: 0.7em;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.layout-cell select {
+  width: 100%;
+  padding: 10px 8px;
+  font-size: 0.8em;
+  font-family: inherit;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--card-border);
+  border-radius: 6px;
+  color: var(--text-primary);
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.layout-cell select:focus {
+  border-color: var(--accent);
+}
+
+.layout-cell select.duplicate {
+  border-color: #ef4444;
+  background: rgba(239, 68, 68, 0.1);
+}
+
+.modal-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+  .grid {
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto auto auto auto auto;
+    grid-template-areas:
+      "search search"
+      "weather timezones"
+      "links slideshow"
+      "notes news"
+      "emoticon quote";
+    height: auto;
+  }
+}
+
+@media (max-width: 600px) {
+  .grid {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto auto auto auto auto auto auto;
+    grid-template-areas:
+      "search"
+      "weather"
+      "timezones"
+      "links"
+      "slideshow"
+      "notes"
+      "news"
+      "emoticon"
+      "quote";
+    height: auto;
+  }
+
+  .main-container {
+    height: auto;
+    min-height: 100vh;
+  }
+
+  body {
+    overflow-y: auto;
+  }
+
+  .settings-panel {
+    width: 100%;
+    right: -100%;
+  }
+
+  .links-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+</style>
+</head>
+<body>
+
+<div class="main-container">
+  <div class="grid">
+    <!-- Search Card -->
+    <div class="card search-card">
+      <form class="search-form" onsubmit="handleSearch(event)">
+        <input type="text" id="searchInput" class="search-input" placeholder="Search the web..." autofocus>
+        <button type="submit" class="search-btn">Search</button>
+      </form>
+    </div>
+
+    <!-- Weather Card -->
+    <div class="card weather-card">
+      <div class="card-header">
+        <span class="card-title">Weather</span>
+        <button class="add-btn" onclick="openWeatherModal()">Edit</button>
+      </div>
+      <div class="weather-content" id="weatherContent">
+        <div class="weather-icon">🌤️</div>
+        <div class="weather-info">
+          <div class="weather-temp">--°C</div>
+          <div class="weather-condition">Loading...</div>
+          <div class="weather-location">--</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Timezone Card -->
+    <div class="card timezone-card">
+      <div class="card-header">
+        <span class="card-title">World Clocks</span>
+        <button class="add-btn" onclick="openTimezoneModal()">+ Add</button>
+      </div>
+      <div class="timezone-list" id="timezoneList"></div>
+    </div>
+
+    <!-- Quick Links Card -->
+    <div class="card links-card">
+      <div class="card-header">
+        <span class="card-title">Quick Links</span>
+        <button class="add-btn" onclick="openLinksModal()">Edit</button>
+      </div>
+      <div class="links-grid" id="linksGrid"></div>
+    </div>
+
+    <!-- Slideshow Card -->
+    <div class="card slideshow-card">
+      <div class="slideshow-container" id="slideshowContainer">
+        <div class="slideshow-placeholder">Click to add images</div>
+      </div>
+      <div class="slideshow-overlay" onclick="document.getElementById('slideshowInput').click()">
+        <span>Click to manage images</span>
+      </div>
+      <input type="file" id="slideshowInput" accept="image/*" multiple style="display:none" onchange="handleSlideshowUpload(event)">
+    </div>
+
+    <!-- Notes Card -->
+    <div class="card notes-card">
+      <div class="card-header">
+        <span class="card-title">Notes</span>
+      </div>
+      <textarea class="notes-textarea" id="notesArea" placeholder="Write your notes here..."></textarea>
+      <div class="save-indicator" id="saveIndicator">Saved</div>
+    </div>
+
+    <!-- News Card -->
+    <div class="card news-card">
+      <div class="news-tabs">
+        <button class="news-tab active" data-feed="international" onclick="switchNewsFeed('international', this)">International</button>
+        <button class="news-tab" data-feed="philippines" onclick="switchNewsFeed('philippines', this)">Philippines</button>
+      </div>
+      <div class="news-content" id="newsContent">
+        <div style="text-align:center;padding:40px;color:var(--text-secondary)">Loading news...</div>
+      </div>
+    </div>
+
+    <!-- Emoticon Card -->
+    <div class="card emoticon-card" id="emoticonCard" onclick="cycleEmoticon()">:3</div>
+
+    <!-- Quote Card -->
+    <div class="card quote-card">
+      <div class="quote-text" id="quoteText">Loading...</div>
+    </div>
+  </div>
+</div>
+
+<!-- Settings Button -->
+<button class="settings-btn" onclick="toggleSettings()">&#9881;</button>
+
+<!-- Settings Panel -->
+<div class="settings-panel" id="settingsPanel">
+  <div class="settings-header">
+    <span class="settings-title">Settings</span>
+    <button class="close-btn" onclick="toggleSettings()">&times;</button>
+  </div>
+
+  <div class="settings-section">
+    <div class="section-title">Background</div>
+    <input type="file" accept="image/*" onchange="handleBackgroundUpload(event)">
+    <div class="slider-container" style="margin-top:16px">
+      <div class="slider-header">
+        <span class="setting-label">Blur Amount</span>
+        <span class="slider-value" id="blurValue">0px</span>
+      </div>
+      <input type="range" id="blurSlider" min="0" max="30" value="0" oninput="updateBlur(this.value)">
+    </div>
+  </div>
+
+  <div class="settings-section">
+    <div class="section-title">Card Appearance</div>
+    <div class="setting-row">
+      <span class="setting-label">Font Size</span>
+      <div class="font-size-controls">
+        <button class="font-size-btn" onclick="adjustFontSize(-10)">−</button>
+        <span class="font-size-value" id="fontSizeValue">100%</span>
+        <button class="font-size-btn" onclick="adjustFontSize(10)">+</button>
+      </div>
+    </div>
+    <div class="setting-row">
+      <span class="setting-label">Card Color</span>
+      <input type="color" id="cardColorPicker" value="#1e1e23" onchange="updateCardColor(this.value)">
+    </div>
+    <div class="setting-row">
+      <span class="setting-label">Accent Color</span>
+      <input type="color" id="accentColorPicker" value="#6366f1" onchange="updateAccentColor(this.value)">
+    </div>
+    <div class="setting-row">
+      <span class="setting-label">Font Color</span>
+      <input type="color" id="fontColorPicker" value="#ffffff" onchange="updateFontColor(this.value)">
+    </div>
+    <div class="slider-container">
+      <div class="slider-header">
+        <span class="setting-label">Card Opacity</span>
+        <span class="slider-value" id="cardOpacityValue">85%</span>
+      </div>
+      <input type="range" id="cardOpacitySlider" min="0" max="100" value="85" oninput="updateCardOpacity(this.value)">
+    </div>
+    <div class="slider-container">
+      <div class="slider-header">
+        <span class="setting-label">Card Blur</span>
+        <span class="slider-value" id="cardBlurValue">12px</span>
+      </div>
+      <input type="range" id="cardBlurSlider" min="0" max="30" value="12" oninput="updateCardBlur(this.value)">
+    </div>
+  </div>
+
+  <div class="settings-section">
+    <div class="section-title">Theme Presets</div>
+    <select class="theme-select" id="themeSelect" onchange="applyThemePreset(this.value)">
+      <option value="custom">Custom</option>
+      <option value="nord">Nord</option>
+      <option value="catppuccin">Catppuccin</option>
+      <option value="dracula">Dracula</option>
+      <option value="gruvbox">Gruvbox</option>
+      <option value="tokyonight">Tokyo Night</option>
+    </select>
+  </div>
+
+  <div class="settings-section">
+    <div class="section-title">Layout</div>
+    <button class="btn btn-block" onclick="openLayoutModal()">Customize Layout</button>
+    <p style="font-size:0.75em;color:var(--text-secondary);margin-top:8px">Rearrange which cards appear in which grid positions</p>
+  </div>
+
+  <div class="settings-section">
+    <div class="section-title">Quotes</div>
+    <button class="btn btn-block" onclick="openQuotesModal()">Manage Quotes</button>
+    <p style="font-size:0.75em;color:var(--text-secondary);margin-top:8px">Add your own quotes, song lyrics, or phrases</p>
+  </div>
+
+  <div class="settings-section">
+    <div class="section-title">Data Management</div>
+    <button class="btn btn-block" onclick="exportSettings()">Export Settings</button>
+    <button class="btn btn-block" onclick="document.getElementById('importInput').click()">Import Settings</button>
+    <input type="file" id="importInput" accept=".json" style="display:none" onchange="importSettings(event)">
+    <button class="btn btn-block btn-danger" onclick="clearAllData()">Clear All Data</button>
+    <div class="storage-info" id="storageInfo">Calculating storage...</div>
+  </div>
+</div>
+
+<!-- Timezone Modal -->
+<div class="modal-overlay" id="timezoneModal">
+  <div class="modal">
+    <div class="modal-title">Add Timezone</div>
+    <select id="timezoneSelect">
+      <option value="Asia/Manila">Manila, Philippines</option>
+      <option value="Africa/Cairo">Cairo, Egypt</option>
+      <option value="Asia/Amman">Amman, Jordan</option>
+      <option value="Europe/London">London/Scotland, UK</option>
+      <option value="America/New_York">New York, USA</option>
+      <option value="America/Los_Angeles">Los Angeles, USA</option>
+      <option value="Europe/Paris">Paris, France</option>
+      <option value="Europe/Berlin">Berlin, Germany</option>
+      <option value="Asia/Tokyo">Tokyo, Japan</option>
+      <option value="Asia/Seoul">Seoul, South Korea</option>
+      <option value="Asia/Singapore">Singapore</option>
+      <option value="Asia/Dubai">Dubai, UAE</option>
+      <option value="Australia/Sydney">Sydney, Australia</option>
+      <option value="Pacific/Auckland">Auckland, New Zealand</option>
+      <option value="America/Chicago">Chicago, USA</option>
+      <option value="America/Toronto">Toronto, Canada</option>
+      <option value="Europe/Moscow">Moscow, Russia</option>
+      <option value="Asia/Hong_Kong">Hong Kong</option>
+      <option value="Asia/Bangkok">Bangkok, Thailand</option>
+      <option value="Asia/Jakarta">Jakarta, Indonesia</option>
+    </select>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeTimezoneModal()">Cancel</button>
+      <button class="btn" style="background:var(--accent)" onclick="addTimezone()">Add</button>
+    </div>
+  </div>
+</div>
+
+<!-- Quotes Modal -->
+<div class="modal-overlay" id="quotesModal">
+  <div class="modal" style="max-width:500px">
+    <div class="modal-title">Manage Quotes</div>
+    <textarea id="quotesTextarea" style="width:100%;height:200px;padding:12px;font-family:inherit;font-size:0.85em;background:rgba(255,255,255,0.05);border:1px solid var(--card-border);border-radius:8px;color:var(--text-primary);resize:vertical" placeholder="Enter one quote per line..."></textarea>
+    <p style="font-size:0.75em;color:var(--text-secondary);margin:8px 0">Enter one quote per line. These will be randomly displayed on each page load.</p>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeQuotesModal()">Cancel</button>
+      <button class="btn" style="background:var(--accent)" onclick="saveQuotes()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Weather Modal -->
+<div class="modal-overlay" id="weatherModal">
+  <div class="modal">
+    <div class="modal-title">Weather Location</div>
+    <input type="text" id="weatherLocationInput" placeholder="Enter city name..." style="width:100%;padding:12px;font-family:inherit;font-size:0.9em;background:rgba(255,255,255,0.05);border:1px solid var(--card-border);border-radius:8px;color:var(--text-primary);margin-bottom:12px">
+    <p style="font-size:0.75em;color:var(--text-secondary);margin-bottom:16px">Leave empty to auto-detect location</p>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeWeatherModal()">Cancel</button>
+      <button class="btn" style="background:var(--accent)" onclick="saveWeatherLocation()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Layout Modal -->
+<div class="modal-overlay" id="layoutModal">
+  <div class="modal" style="max-width:450px">
+    <div class="modal-title">Customize Layout</div>
+    <p style="font-size:0.75em;color:var(--text-secondary);margin-bottom:16px">Drag cards to rearrange or use dropdowns to swap positions</p>
+    <div class="layout-editor">
+      <div class="layout-row">
+        <div class="layout-cell">
+          <label>Row 2, Col 1</label>
+          <select id="layout-r2c1" onchange="validateLayoutSelection()"></select>
+        </div>
+        <div class="layout-cell">
+          <label>Row 2, Col 2</label>
+          <select id="layout-r2c2" onchange="validateLayoutSelection()"></select>
+        </div>
+        <div class="layout-cell">
+          <label>Row 2, Col 3</label>
+          <select id="layout-r2c3" onchange="validateLayoutSelection()"></select>
+        </div>
+      </div>
+      <div class="layout-row">
+        <div class="layout-cell">
+          <label>Row 3, Col 1</label>
+          <select id="layout-r3c1" onchange="validateLayoutSelection()"></select>
+        </div>
+        <div class="layout-cell">
+          <label>Row 3, Col 2</label>
+          <select id="layout-r3c2" onchange="validateLayoutSelection()"></select>
+        </div>
+        <div class="layout-cell">
+          <label>Row 3, Col 3</label>
+          <select id="layout-r3c3" onchange="validateLayoutSelection()"></select>
+        </div>
+      </div>
+    </div>
+    <div id="layoutError" style="color:#ef4444;font-size:0.75em;margin-top:8px;display:none">Each card can only appear once</div>
+    <div class="modal-actions" style="margin-top:16px">
+      <button class="btn" onclick="resetLayout()">Reset Default</button>
+      <button class="btn" onclick="closeLayoutModal()">Cancel</button>
+      <button class="btn" id="saveLayoutBtn" style="background:var(--accent)" onclick="saveGridLayout()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Quick Links Modal -->
+<div class="modal-overlay" id="linksModal">
+  <div class="modal" style="max-width:500px">
+    <div class="modal-title">Manage Quick Links</div>
+    <div id="linksEditor" style="max-height:300px;overflow-y:auto;margin-bottom:12px"></div>
+    <button class="btn btn-block" onclick="addNewLink()">+ Add Link</button>
+    <div class="modal-actions" style="margin-top:16px">
+      <button class="btn" onclick="closeLinksModal()">Cancel</button>
+      <button class="btn" style="background:var(--accent)" onclick="saveLinks()">Save</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================
+// IndexedDB Setup for Large Image Storage
+// ============================================
+const DB_NAME = 'StartpageDB';
+const DB_VERSION = 1;
+let db = null;
+
+function openDatabase() {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open(DB_NAME, DB_VERSION);
+
+    request.onerror = () => reject(request.error);
+    request.onsuccess = () => {
+      db = request.result;
+      resolve(db);
+    };
+
+    request.onupgradeneeded = (event) => {
+      const database = event.target.result;
+      if (!database.objectStoreNames.contains('images')) {
+        database.createObjectStore('images', { keyPath: 'id' });
+      }
+      if (!database.objectStoreNames.contains('background')) {
+        database.createObjectStore('background', { keyPath: 'id' });
+      }
+    };
+  });
+}
+
+async function saveToIndexedDB(storeName, id, data) {
+  if (!db) await openDatabase();
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction(storeName, 'readwrite');
+    const store = transaction.objectStore(storeName);
+    const request = store.put({ id, data });
+    request.onsuccess = () => resolve();
+    request.onerror = () => reject(request.error);
+  });
+}
+
+async function getFromIndexedDB(storeName, id) {
+  if (!db) await openDatabase();
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction(storeName, 'readonly');
+    const store = transaction.objectStore(storeName);
+    const request = store.get(id);
+    request.onsuccess = () => resolve(request.result?.data || null);
+    request.onerror = () => reject(request.error);
+  });
+}
+
+async function clearIndexedDBStore(storeName) {
+  if (!db) await openDatabase();
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction(storeName, 'readwrite');
+    const store = transaction.objectStore(storeName);
+    const request = store.clear();
+    request.onsuccess = () => resolve();
+    request.onerror = () => reject(request.error);
+  });
+}
+
+// ============================================
+// Default Quotes (User can customize)
+// ============================================
+const defaultQuotes = [
+  "The only way to do great work is to love what you do.",
+  "In the middle of difficulty lies opportunity.",
+  "Simplicity is the ultimate sophistication.",
+  "The future belongs to those who believe in the beauty of their dreams.",
+  "What we think, we become.",
+  "The journey of a thousand miles begins with a single step.",
+  "Be yourself; everyone else is already taken.",
+  "Not all those who wander are lost.",
+  "The only limit to our realization of tomorrow is our doubts of today.",
+  "Everything you can imagine is real.",
+  "Stay hungry, stay foolish.",
+  "The best time to plant a tree was 20 years ago. The second best time is now.",
+  "Do what you can, with what you have, where you are.",
+  "It does not do to dwell on dreams and forget to live.",
+  "The mind is everything. What you think you become."
+];
+
+// ============================================
+// Grid Layout Customization
+// ============================================
+const defaultLayout = {
+  row2: ['weather', 'timezones', 'links'],
+  row3: ['slideshow', 'notes', 'news']
+};
+
+const cardNames = {
+  weather: 'Weather',
+  timezones: 'Timezones',
+  links: 'Quick Links',
+  slideshow: 'Slideshow',
+  notes: 'Notes',
+  news: 'News'
+};
+
+function loadGridLayout() {
+  const saved = localStorage.getItem('gridLayout');
+  const layout = saved ? JSON.parse(saved) : defaultLayout;
+  applyGridLayout(layout);
+}
+
+function applyGridLayout(layout) {
+  const grid = document.querySelector('.grid');
+  const areas = `
+    "search search search"
+    "${layout.row2.join(' ')}"
+    "${layout.row3.join(' ')}"
+    "emoticon quote quote"
+  `;
+  grid.style.gridTemplateAreas = areas;
+}
+
+function openLayoutModal() {
+  const saved = localStorage.getItem('gridLayout');
+  const layout = saved ? JSON.parse(saved) : defaultLayout;
+
+  const allCards = [...layout.row2, ...layout.row3];
+  const selects = [
+    'layout-r2c1', 'layout-r2c2', 'layout-r2c3',
+    'layout-r3c1', 'layout-r3c2', 'layout-r3c3'
+  ];
+
+  selects.forEach((id, index) => {
+    const select = document.getElementById(id);
+    select.innerHTML = Object.keys(cardNames).map(card =>
+      `<option value="${card}">${cardNames[card]}</option>`
+    ).join('');
+    select.value = allCards[index];
+  });
+
+  document.getElementById('layoutError').style.display = 'none';
+  document.getElementById('layoutModal').classList.add('open');
+}
+
+function closeLayoutModal() {
+  document.getElementById('layoutModal').classList.remove('open');
+}
+
+function validateLayoutSelection() {
+  const selects = [
+    'layout-r2c1', 'layout-r2c2', 'layout-r2c3',
+    'layout-r3c1', 'layout-r3c2', 'layout-r3c3'
+  ];
+
+  const values = selects.map(id => document.getElementById(id).value);
+  const unique = new Set(values);
+  const hasDuplicates = unique.size !== values.length;
+
+  // Find and highlight duplicates
+  const counts = {};
+  values.forEach(v => counts[v] = (counts[v] || 0) + 1);
+
+  selects.forEach((id, index) => {
+    const select = document.getElementById(id);
+    if (counts[values[index]] > 1) {
+      select.classList.add('duplicate');
+    } else {
+      select.classList.remove('duplicate');
+    }
+  });
+
+  document.getElementById('layoutError').style.display = hasDuplicates ? 'block' : 'none';
+  document.getElementById('saveLayoutBtn').disabled = hasDuplicates;
+
+  return !hasDuplicates;
+}
+
+function saveGridLayout() {
+  if (!validateLayoutSelection()) return;
+
+  const layout = {
+    row2: [
+      document.getElementById('layout-r2c1').value,
+      document.getElementById('layout-r2c2').value,
+      document.getElementById('layout-r2c3').value
+    ],
+    row3: [
+      document.getElementById('layout-r3c1').value,
+      document.getElementById('layout-r3c2').value,
+      document.getElementById('layout-r3c3').value
+    ]
+  };
+
+  localStorage.setItem('gridLayout', JSON.stringify(layout));
+  applyGridLayout(layout);
+  closeLayoutModal();
+}
+
+function resetLayout() {
+  localStorage.removeItem('gridLayout');
+  applyGridLayout(defaultLayout);
+  closeLayoutModal();
+}
+
+// ============================================
+// State Management
+// ============================================
+let timezones = [];
+let slideshowImages = [];
+let currentSlide = 0;
+let slideshowInterval = null;
+let currentEmoticon = ':3';
+let currentNewsFeed = 'international';
+let newsCache = {};
+let saveTimeout = null;
+let quickLinks = [];
+let editingLinks = [];
+
+const emoticons = [':3', ':D', ':)', ':P', 'uwu', '^_^', 'o_o', ':>', '<3', '(:', '=^.^='];
+
+const defaultQuickLinks = [
+  { icon: '📺', label: 'YouTube', url: 'https://youtube.com' },
+  { icon: '🐙', label: 'GitHub', url: 'https://github.com' },
+  { icon: '🔴', label: 'Reddit', url: 'https://reddit.com' },
+  { icon: '🐦', label: 'Twitter', url: 'https://twitter.com' }
+];
+
+const themePresets = {
+  nord: { bg: '#2e3440', card: '#3b4252', accent: '#88c0d0', font: '#eceff4' },
+  catppuccin: { bg: '#1e1e2e', card: '#313244', accent: '#cba6f7', font: '#cdd6f4' },
+  dracula: { bg: '#282a36', card: '#44475a', accent: '#bd93f9', font: '#f8f8f2' },
+  gruvbox: { bg: '#282828', card: '#3c3836', accent: '#fabd2f', font: '#ebdbb2' },
+  tokyonight: { bg: '#1a1b26', card: '#24283b', accent: '#7aa2f7', font: '#c0caf5' }
+};
+
+const weatherIcons = {
+  0: '☀️', 1: '🌤️', 2: '⛅', 3: '☁️',
+  45: '🌫️', 48: '🌫️',
+  51: '🌦️', 53: '🌦️', 55: '🌧️',
+  61: '🌧️', 63: '🌧️', 65: '🌧️',
+  71: '🌨️', 73: '🌨️', 75: '❄️',
+  80: '🌧️', 81: '🌧️', 82: '⛈️',
+  95: '⛈️', 96: '⛈️', 99: '⛈️'
+};
+
+const weatherConditions = {
+  0: 'Clear sky', 1: 'Mainly clear', 2: 'Partly cloudy', 3: 'Overcast',
+  45: 'Foggy', 48: 'Depositing rime fog',
+  51: 'Light drizzle', 53: 'Moderate drizzle', 55: 'Dense drizzle',
+  61: 'Slight rain', 63: 'Moderate rain', 65: 'Heavy rain',
+  71: 'Slight snow', 73: 'Moderate snow', 75: 'Heavy snow',
+  80: 'Slight showers', 81: 'Moderate showers', 82: 'Violent showers',
+  95: 'Thunderstorm', 96: 'Thunderstorm with hail', 99: 'Thunderstorm with heavy hail'
+};
+
+const timezoneNames = {
+  'Asia/Manila': 'Manila',
+  'Africa/Cairo': 'Cairo',
+  'Asia/Amman': 'Amman',
+  'Europe/London': 'Scotland',
+  'America/New_York': 'New York',
+  'America/Los_Angeles': 'Los Angeles',
+  'Europe/Paris': 'Paris',
+  'Europe/Berlin': 'Berlin',
+  'Asia/Tokyo': 'Tokyo',
+  'Asia/Seoul': 'Seoul',
+  'Asia/Singapore': 'Singapore',
+  'Asia/Dubai': 'Dubai',
+  'Australia/Sydney': 'Sydney',
+  'Pacific/Auckland': 'Auckland',
+  'America/Chicago': 'Chicago',
+  'America/Toronto': 'Toronto',
+  'Europe/Moscow': 'Moscow',
+  'Asia/Hong_Kong': 'Hong Kong',
+  'Asia/Bangkok': 'Bangkok',
+  'Asia/Jakarta': 'Jakarta'
+};
+
+// ============================================
+// Initialization
+// ============================================
+document.addEventListener('DOMContentLoaded', async () => {
+  await openDatabase();
+  loadSettings();
+  loadGridLayout();
+  loadTimezones();
+  loadNotes();
+  loadEmoticon();
+  loadQuoteDisplay();
+  loadQuickLinks();
+  await loadSlideshowImages();
+  await loadBackgroundImage();
+  loadNews();
+  loadWeather();
+  updateClocks();
+  setInterval(updateClocks, 1000);
+  updateStorageInfo();
+});
+
+// ============================================
+// Search
+// ============================================
+function handleSearch(event) {
+  event.preventDefault();
+  const query = document.getElementById('searchInput').value.trim();
+  if (query) {
+    window.location.href = `https://www.startpage.com/sp/search?query=${encodeURIComponent(query)}`;
+  }
+}
+
+// ============================================
+// Quotes
+// ============================================
+function loadQuoteDisplay() {
+  const quotes = JSON.parse(localStorage.getItem('userQuotes') || 'null') || defaultQuotes;
+  const randomQuote = quotes[Math.floor(Math.random() * quotes.length)];
+  document.getElementById('quoteText').textContent = `"${randomQuote}"`;
+}
+
+function openQuotesModal() {
+  const quotes = JSON.parse(localStorage.getItem('userQuotes') || 'null') || defaultQuotes;
+  document.getElementById('quotesTextarea').value = quotes.join('\n');
+  document.getElementById('quotesModal').classList.add('open');
+}
+
+function closeQuotesModal() {
+  document.getElementById('quotesModal').classList.remove('open');
+}
+
+function saveQuotes() {
+  const text = document.getElementById('quotesTextarea').value;
+  const quotes = text.split('\n').map(q => q.trim()).filter(q => q.length > 0);
+  if (quotes.length > 0) {
+    localStorage.setItem('userQuotes', JSON.stringify(quotes));
+    loadQuoteDisplay();
+  }
+  closeQuotesModal();
+}
+
+// ============================================
+// Timezones
+// ============================================
+function loadTimezones() {
+  const saved = localStorage.getItem('timezones');
+  if (saved) {
+    timezones = JSON.parse(saved);
+  } else {
+    // Default timezones
+    timezones = ['Asia/Manila', 'Africa/Cairo', 'Asia/Amman', 'Europe/London'];
+    localStorage.setItem('timezones', JSON.stringify(timezones));
+  }
+  renderTimezones();
+}
+
+function renderTimezones() {
+  const container = document.getElementById('timezoneList');
+  container.innerHTML = '';
+
+  timezones.forEach((tz, index) => {
+    const item = document.createElement('div');
+    item.className = 'timezone-item';
+    item.innerHTML = `
+      <div class="timezone-info">
+        <div class="timezone-city">${timezoneNames[tz] || tz}</div>
+        <div class="timezone-time" id="tz-time-${index}">--:--:--</div>
+        <div class="timezone-date" id="tz-date-${index}">---</div>
+      </div>
+      <button class="remove-btn" onclick="removeTimezone(${index})">&times;</button>
+    `;
+    container.appendChild(item);
+  });
+
+  updateClocks();
+}
+
+function updateClocks() {
+  const now = new Date();
+
+  timezones.forEach((tz, index) => {
+    try {
+      const timeEl = document.getElementById(`tz-time-${index}`);
+      const dateEl = document.getElementById(`tz-date-${index}`);
+
+      if (timeEl && dateEl) {
+        timeEl.textContent = now.toLocaleTimeString('en-US', {
+          timeZone: tz,
+          hour12: false,
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit'
+        });
+
+        dateEl.textContent = now.toLocaleDateString('en-US', {
+          timeZone: tz,
+          weekday: 'short',
+          month: 'short',
+          day: 'numeric'
+        });
+      }
+    } catch (e) {
+      console.error(`Error updating clock for ${tz}:`, e);
+    }
+  });
+}
+
+function openTimezoneModal() {
+  document.getElementById('timezoneModal').classList.add('open');
+}
+
+function closeTimezoneModal() {
+  document.getElementById('timezoneModal').classList.remove('open');
+}
+
+function addTimezone() {
+  const select = document.getElementById('timezoneSelect');
+  const tz = select.value;
+
+  if (!timezones.includes(tz)) {
+    timezones.push(tz);
+    localStorage.setItem('timezones', JSON.stringify(timezones));
+    renderTimezones();
+  }
+
+  closeTimezoneModal();
+}
+
+function removeTimezone(index) {
+  timezones.splice(index, 1);
+  localStorage.setItem('timezones', JSON.stringify(timezones));
+  renderTimezones();
+}
+
+// ============================================
+// Slideshow
+// ============================================
+async function loadSlideshowImages() {
+  try {
+    const images = await getFromIndexedDB('images', 'slideshow');
+    if (images && images.length > 0) {
+      slideshowImages = images;
+      renderSlideshow();
+    }
+  } catch (e) {
+    console.error('Error loading slideshow images:', e);
+  }
+}
+
+function renderSlideshow() {
+  const container = document.getElementById('slideshowContainer');
+
+  if (slideshowImages.length === 0) {
+    container.innerHTML = '<div class="slideshow-placeholder">Click to add images</div>';
+    return;
+  }
+
+  // Shuffle images for random order
+  const shuffled = [...slideshowImages].sort(() => Math.random() - 0.5);
+
+  container.innerHTML = '';
+  shuffled.forEach((src, index) => {
+    const img = document.createElement('img');
+    img.src = src;
+    img.className = 'slide' + (index === 0 ? ' active' : '');
+    container.appendChild(img);
+  });
+
+  startSlideshow();
+}
+
+function startSlideshow() {
+  if (slideshowInterval) clearInterval(slideshowInterval);
+
+  const slides = document.querySelectorAll('.slide');
+  if (slides.length <= 1) return;
+
+  currentSlide = 0;
+
+  slideshowInterval = setInterval(() => {
+    slides[currentSlide].classList.remove('active');
+    currentSlide = Math.floor(Math.random() * slides.length);
+    slides[currentSlide].classList.add('active');
+  }, 8000);
+}
+
+async function handleSlideshowUpload(event) {
+  const files = Array.from(event.target.files);
+  if (files.length === 0) return;
+
+  const container = document.getElementById('slideshowContainer');
+  container.innerHTML = '<div class="slideshow-placeholder">Processing images...</div>';
+
+  const processedImages = [];
+
+  for (let i = 0; i < files.length; i++) {
+    try {
+      const compressed = await compressImage(files[i], 800, 0.7);
+      processedImages.push(compressed);
+      container.innerHTML = `<div class="slideshow-placeholder">Processing ${i + 1}/${files.length}...</div>`;
+    } catch (e) {
+      console.error('Error processing image:', e);
+    }
+  }
+
+  // Merge with existing images
+  slideshowImages = [...slideshowImages, ...processedImages];
+
+  try {
+    await saveToIndexedDB('images', 'slideshow', slideshowImages);
+    renderSlideshow();
+    updateStorageInfo();
+  } catch (e) {
+    console.error('Error saving images:', e);
+    alert('Error saving images. Storage may be full.');
+  }
+
+  event.target.value = '';
+}
+
+function compressImage(file, maxWidth, quality) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+
+    reader.onload = (e) => {
+      const img = new Image();
+
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let width = img.width;
+        let height = img.height;
+
+        if (width > maxWidth) {
+          height = Math.floor((height * maxWidth) / width);
+          width = maxWidth;
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+
+        resolve(canvas.toDataURL('image/jpeg', quality));
+      };
+
+      img.onerror = reject;
+      img.src = e.target.result;
+    };
+
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+// ============================================
+// Notes
+// ============================================
+function loadNotes() {
+  const saved = localStorage.getItem('notes');
+  if (saved) {
+    document.getElementById('notesArea').value = saved;
+  }
+
+  // Debounced auto-save
+  document.getElementById('notesArea').addEventListener('input', () => {
+    if (saveTimeout) clearTimeout(saveTimeout);
+
+    saveTimeout = setTimeout(() => {
+      localStorage.setItem('notes', document.getElementById('notesArea').value);
+      const indicator = document.getElementById('saveIndicator');
+      indicator.classList.add('visible');
+      setTimeout(() => indicator.classList.remove('visible'), 1500);
+    }, 500);
+  });
+}
+
+// ============================================
+// Emoticon
+// ============================================
+function loadEmoticon() {
+  const saved = localStorage.getItem('emoticon');
+  if (saved) {
+    currentEmoticon = saved;
+  }
+  document.getElementById('emoticonCard').textContent = currentEmoticon;
+}
+
+function cycleEmoticon() {
+  const currentIndex = emoticons.indexOf(currentEmoticon);
+  currentEmoticon = emoticons[(currentIndex + 1) % emoticons.length];
+  document.getElementById('emoticonCard').textContent = currentEmoticon;
+  localStorage.setItem('emoticon', currentEmoticon);
+}
+
+// ============================================
+// News
+// ============================================
+async function loadNews() {
+  await fetchNews(currentNewsFeed);
+}
+
+function switchNewsFeed(feed, btn) {
+  currentNewsFeed = feed;
+
+  document.querySelectorAll('.news-tab').forEach(tab => tab.classList.remove('active'));
+  btn.classList.add('active');
+
+  fetchNews(feed);
+}
+
+async function fetchNews(feed) {
+  const newsContent = document.getElementById('newsContent');
+  newsContent.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-secondary)">Loading news...</div>';
+
+  // Check cache (5 min expiry)
+  const cacheKey = `news_${feed}`;
+  const cached = newsCache[cacheKey];
+  if (cached && Date.now() - cached.time < 5 * 60 * 1000) {
+    renderNews(cached.articles);
+    return;
+  }
+
+  const feeds = {
+    international: ['https://feeds.bbci.co.uk/news/world/rss.xml'],
+    philippines: [
+      'https://www.rappler.com/feed/',
+      'https://newsinfo.inquirer.net/feed',
+      'https://www.gmanetwork.com/news/rss/news'
+    ]
+  };
+
+  const feedUrls = feeds[feed];
+  const sourceNames = {
+    'https://feeds.bbci.co.uk/news/world/rss.xml': 'BBC News',
+    'https://www.rappler.com/feed/': 'Rappler',
+    'https://newsinfo.inquirer.net/feed': 'Inquirer',
+    'https://www.gmanetwork.com/news/rss/news': 'GMA News'
+  };
+
+  // Helper to parse RSS XML
+  function parseRSS(xmlText, sourceName) {
+    const parser = new DOMParser();
+    const xmlDoc = parser.parseFromString(xmlText, 'text/xml');
+    const items = xmlDoc.querySelectorAll('item');
+    if (items.length === 0) return null;
+
+    return Array.from(items).slice(0, 5).map(item => ({
+      title: item.querySelector('title')?.textContent || 'No title',
+      url: item.querySelector('link')?.textContent || '#',
+      source: sourceName,
+      date: new Date(item.querySelector('pubDate')?.textContent || Date.now()).toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      })
+    }));
+  }
+
+  // Try multiple CORS proxies in order
+  const proxies = [
+    url => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+    url => `https://corsproxy.io/?${encodeURIComponent(url)}`,
+    url => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`
+  ];
+
+  // Try each feed URL with each proxy
+  for (const feedUrl of feedUrls) {
+    const sourceName = sourceNames[feedUrl] || 'News';
+
+    for (const proxyFn of proxies) {
+      try {
+        const proxyUrl = proxyFn(feedUrl);
+        const response = await fetch(proxyUrl, { signal: AbortSignal.timeout(8000) });
+        if (!response.ok) continue;
+
+        const xmlText = await response.text();
+        const articles = parseRSS(xmlText, sourceName);
+
+        if (articles && articles.length > 0) {
+          newsCache[cacheKey] = { articles, time: Date.now() };
+          renderNews(articles);
+          return;
+        }
+      } catch (e) {
+        console.error('Proxy failed:', e.message);
+      }
+    }
+
+    // Try RSS2JSON as fallback for this feed
+    try {
+      const response = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(feedUrl)}&count=5`, { signal: AbortSignal.timeout(8000) });
+      const data = await response.json();
+
+      if (data.status === 'ok' && data.items?.length > 0) {
+        const articles = data.items.map(item => ({
+          title: item.title,
+          url: item.link,
+          source: sourceName,
+          date: new Date(item.pubDate).toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+          })
+        }));
+
+        newsCache[cacheKey] = { articles, time: Date.now() };
+        renderNews(articles);
+        return;
+      }
+    } catch (e) {
+      console.error('RSS2JSON failed:', e.message);
+    }
+  }
+
+  newsContent.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-secondary)">Unable to load news</div>';
+}
+
+function renderNews(articles) {
+  const newsContent = document.getElementById('newsContent');
+  newsContent.innerHTML = '';
+
+  articles.forEach(article => {
+    const item = document.createElement('a');
+    item.className = 'news-item';
+    item.href = article.url;
+    item.target = '_blank';
+    item.rel = 'noopener noreferrer';
+    item.innerHTML = `
+      <div class="news-title">${article.title}</div>
+      <div class="news-meta">${article.source} &bull; ${article.date}</div>
+    `;
+    newsContent.appendChild(item);
+  });
+}
+
+// ============================================
+// Settings
+// ============================================
+function toggleSettings() {
+  document.getElementById('settingsPanel').classList.toggle('open');
+}
+
+function loadSettings() {
+  // Font size
+  loadFontSize();
+
+  // Theme preset
+  loadThemePreset();
+
+  // Background blur
+  const blur = localStorage.getItem('bgBlur') || '0';
+  document.getElementById('blurSlider').value = blur;
+  document.getElementById('blurValue').textContent = blur + 'px';
+  document.documentElement.style.setProperty('--bg-blur', blur + 'px');
+
+  // Card color
+  const cardColor = localStorage.getItem('cardColor') || '#1e1e23';
+  document.getElementById('cardColorPicker').value = cardColor;
+  updateCardColor(cardColor, false);
+
+  // Accent color
+  const accentColor = localStorage.getItem('accentColor') || '#6366f1';
+  document.getElementById('accentColorPicker').value = accentColor;
+  updateAccentColor(accentColor, false);
+
+  // Font color
+  const fontColor = localStorage.getItem('fontColor') || '#ffffff';
+  document.getElementById('fontColorPicker').value = fontColor;
+  updateFontColor(fontColor, false);
+
+  // Card opacity
+  const cardOpacity = localStorage.getItem('cardOpacity') || '85';
+  document.getElementById('cardOpacitySlider').value = cardOpacity;
+  document.getElementById('cardOpacityValue').textContent = cardOpacity + '%';
+  applyCardBg();
+
+  // Card blur
+  const cardBlur = localStorage.getItem('cardBlur') || '12';
+  document.getElementById('cardBlurSlider').value = cardBlur;
+  document.getElementById('cardBlurValue').textContent = cardBlur + 'px';
+  document.documentElement.style.setProperty('--card-blur', cardBlur + 'px');
+}
+
+function updateBlur(value) {
+  document.documentElement.style.setProperty('--bg-blur', value + 'px');
+  document.getElementById('blurValue').textContent = value + 'px';
+  localStorage.setItem('bgBlur', value);
+}
+
+function updateCardColor(hex, save = true) {
+  // Convert hex to RGB
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  document.documentElement.style.setProperty('--card-base-r', r);
+  document.documentElement.style.setProperty('--card-base-g', g);
+  document.documentElement.style.setProperty('--card-base-b', b);
+  if (save) localStorage.setItem('cardColor', hex);
+  applyCardBg();
+}
+
+function updateAccentColor(hex, save = true) {
+  document.documentElement.style.setProperty('--accent', hex);
+  // Create lighter hover variant
+  const r = Math.min(255, parseInt(hex.slice(1, 3), 16) + 30);
+  const g = Math.min(255, parseInt(hex.slice(3, 5), 16) + 30);
+  const b = Math.min(255, parseInt(hex.slice(5, 7), 16) + 30);
+  document.documentElement.style.setProperty('--accent-hover', `rgb(${r}, ${g}, ${b})`);
+  if (save) localStorage.setItem('accentColor', hex);
+}
+
+function updateFontColor(hex, save = true) {
+  document.documentElement.style.setProperty('--text-primary', hex);
+  // Create secondary (dimmer) variant
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  document.documentElement.style.setProperty('--text-secondary', `rgba(${r}, ${g}, ${b}, 0.6)`);
+  if (save) localStorage.setItem('fontColor', hex);
+}
+
+function applyCardBg() {
+  const r = getComputedStyle(document.documentElement).getPropertyValue('--card-base-r').trim() || 30;
+  const g = getComputedStyle(document.documentElement).getPropertyValue('--card-base-g').trim() || 30;
+  const b = getComputedStyle(document.documentElement).getPropertyValue('--card-base-b').trim() || 35;
+  const opacity = (localStorage.getItem('cardOpacity') || 85) / 100;
+  document.documentElement.style.setProperty('--card-bg', `rgba(${r}, ${g}, ${b}, ${opacity})`);
+}
+
+function updateCardOpacity(value) {
+  document.getElementById('cardOpacityValue').textContent = value + '%';
+  localStorage.setItem('cardOpacity', value);
+  applyCardBg();
+}
+
+function updateCardBlur(value) {
+  document.documentElement.style.setProperty('--card-blur', value + 'px');
+  document.getElementById('cardBlurValue').textContent = value + 'px';
+  localStorage.setItem('cardBlur', value);
+}
+
+// ============================================
+// Background Image
+// ============================================
+async function handleBackgroundUpload(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  try {
+    const compressed = await compressImage(file, 1920, 0.85);
+    await saveToIndexedDB('background', 'main', compressed);
+    document.body.style.backgroundImage = `url(${compressed})`;
+    updateStorageInfo();
+  } catch (e) {
+    console.error('Error saving background:', e);
+    alert('Error saving background image');
+  }
+
+  event.target.value = '';
+}
+
+async function loadBackgroundImage() {
+  try {
+    const bg = await getFromIndexedDB('background', 'main');
+    if (bg) {
+      document.body.style.backgroundImage = `url(${bg})`;
+    }
+  } catch (e) {
+    console.error('Error loading background:', e);
+  }
+}
+
+// ============================================
+// Data Management
+// ============================================
+function exportSettings() {
+  const data = {
+    timezones,
+    emoticon: currentEmoticon,
+    notes: document.getElementById('notesArea').value,
+    quotes: JSON.parse(localStorage.getItem('userQuotes') || 'null'),
+    settings: {
+      bgBlur: localStorage.getItem('bgBlur'),
+      cardOpacity: localStorage.getItem('cardOpacity'),
+      cardBlur: localStorage.getItem('cardBlur')
+    }
+  };
+
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'startpage-settings.json';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function importSettings(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const data = JSON.parse(e.target.result);
+
+      if (data.timezones) {
+        timezones = data.timezones;
+        localStorage.setItem('timezones', JSON.stringify(timezones));
+        renderTimezones();
+      }
+
+      if (data.emoticon) {
+        currentEmoticon = data.emoticon;
+        localStorage.setItem('emoticon', currentEmoticon);
+        document.getElementById('emoticonCard').textContent = currentEmoticon;
+      }
+
+      if (data.notes) {
+        document.getElementById('notesArea').value = data.notes;
+        localStorage.setItem('notes', data.notes);
+      }
+
+      if (data.quotes) {
+        localStorage.setItem('userQuotes', JSON.stringify(data.quotes));
+        loadQuoteDisplay();
+      }
+
+      if (data.settings) {
+        if (data.settings.bgBlur) updateBlur(data.settings.bgBlur);
+        if (data.settings.cardOpacity) updateCardOpacity(data.settings.cardOpacity);
+        if (data.settings.cardBlur) updateCardBlur(data.settings.cardBlur);
+      }
+
+      alert('Settings imported successfully!');
+    } catch (e) {
+      console.error('Error importing settings:', e);
+      alert('Error importing settings. Invalid file format.');
+    }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
+async function clearAllData() {
+  if (!confirm('This will delete all your data including images, notes, and settings. Continue?')) {
+    return;
+  }
+
+  try {
+    localStorage.clear();
+    await clearIndexedDBStore('images');
+    await clearIndexedDBStore('background');
+    alert('All data cleared. Reloading...');
+    location.reload();
+  } catch (e) {
+    console.error('Error clearing data:', e);
+    alert('Error clearing data');
+  }
+}
+
+async function updateStorageInfo() {
+  const infoEl = document.getElementById('storageInfo');
+
+  try {
+    // localStorage size
+    let localStorageSize = 0;
+    for (let key in localStorage) {
+      if (localStorage.hasOwnProperty(key)) {
+        localStorageSize += localStorage[key].length + key.length;
+      }
+    }
+
+    // IndexedDB estimate
+    let idbSize = 0;
+    if (navigator.storage && navigator.storage.estimate) {
+      const estimate = await navigator.storage.estimate();
+      idbSize = estimate.usage || 0;
+    }
+
+    const totalKB = ((localStorageSize + idbSize) / 1024).toFixed(1);
+    const totalMB = ((localStorageSize + idbSize) / 1024 / 1024).toFixed(2);
+
+    infoEl.textContent = `Storage: ${totalMB}MB (${slideshowImages.length} images)`;
+  } catch (e) {
+    infoEl.textContent = 'Storage: Unable to calculate';
+  }
+}
+
+// Close modals on outside click
+document.querySelectorAll('.modal-overlay').forEach(overlay => {
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) {
+      overlay.classList.remove('open');
+    }
+  });
+});
+
+// Close settings on escape
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    document.getElementById('settingsPanel').classList.remove('open');
+    document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('open'));
+  }
+});
+
+// ============================================
+// Weather
+// ============================================
+async function loadWeather() {
+  const savedLocation = localStorage.getItem('weatherLocation');
+
+  try {
+    let lat, lon, locationName;
+
+    if (savedLocation) {
+      // Use saved location - geocode it
+      const geoResponse = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(savedLocation)}&count=1`);
+      const geoData = await geoResponse.json();
+
+      if (geoData.results && geoData.results.length > 0) {
+        lat = geoData.results[0].latitude;
+        lon = geoData.results[0].longitude;
+        locationName = geoData.results[0].name;
+      } else {
+        throw new Error('Location not found');
+      }
+    } else {
+      // Auto-detect location via IP
+      const ipResponse = await fetch('https://ipapi.co/json/');
+      const ipData = await ipResponse.json();
+      lat = ipData.latitude;
+      lon = ipData.longitude;
+      locationName = ipData.city || 'Unknown';
+    }
+
+    // Fetch weather from Open-Meteo
+    const weatherResponse = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code&timezone=auto`);
+    const weatherData = await weatherResponse.json();
+
+    const temp = Math.round(weatherData.current.temperature_2m);
+    const code = weatherData.current.weather_code;
+    const icon = weatherIcons[code] || '🌡️';
+    const condition = weatherConditions[code] || 'Unknown';
+
+    document.getElementById('weatherContent').innerHTML = `
+      <div class="weather-icon">${icon}</div>
+      <div class="weather-info">
+        <div class="weather-temp">${temp}°C</div>
+        <div class="weather-condition">${condition}</div>
+        <div class="weather-location">${locationName}</div>
+      </div>
+    `;
+  } catch (e) {
+    console.error('Weather error:', e);
+    document.getElementById('weatherContent').innerHTML = `
+      <div class="weather-icon">⚠️</div>
+      <div class="weather-info">
+        <div class="weather-temp">--°C</div>
+        <div class="weather-condition">Unable to load</div>
+        <div class="weather-location">Check settings</div>
+      </div>
+    `;
+  }
+}
+
+function openWeatherModal() {
+  const saved = localStorage.getItem('weatherLocation') || '';
+  document.getElementById('weatherLocationInput').value = saved;
+  document.getElementById('weatherModal').classList.add('open');
+}
+
+function closeWeatherModal() {
+  document.getElementById('weatherModal').classList.remove('open');
+}
+
+function saveWeatherLocation() {
+  const location = document.getElementById('weatherLocationInput').value.trim();
+  if (location) {
+    localStorage.setItem('weatherLocation', location);
+  } else {
+    localStorage.removeItem('weatherLocation');
+  }
+  closeWeatherModal();
+  loadWeather();
+}
+
+// ============================================
+// Quick Links
+// ============================================
+function loadQuickLinks() {
+  const saved = localStorage.getItem('quickLinks');
+  quickLinks = saved ? JSON.parse(saved) : [...defaultQuickLinks];
+  renderQuickLinks();
+}
+
+function renderQuickLinks() {
+  const grid = document.getElementById('linksGrid');
+  grid.innerHTML = '';
+
+  quickLinks.forEach(link => {
+    const a = document.createElement('a');
+    a.className = 'link-btn';
+    a.href = link.url;
+    a.target = '_blank';
+    a.rel = 'noopener noreferrer';
+    a.innerHTML = `<span class="link-icon">${link.icon}</span><span>${link.label}</span>`;
+    grid.appendChild(a);
+  });
+}
+
+function openLinksModal() {
+  editingLinks = JSON.parse(JSON.stringify(quickLinks));
+  renderLinksEditor();
+  document.getElementById('linksModal').classList.add('open');
+}
+
+function closeLinksModal() {
+  document.getElementById('linksModal').classList.remove('open');
+}
+
+function renderLinksEditor() {
+  const editor = document.getElementById('linksEditor');
+  editor.innerHTML = '';
+
+  editingLinks.forEach((link, index) => {
+    const row = document.createElement('div');
+    row.style.cssText = 'display:flex;gap:8px;margin-bottom:8px;align-items:center';
+    row.innerHTML = `
+      <input type="text" value="${link.icon}" style="width:40px;padding:8px;text-align:center;font-size:1.1em;background:rgba(255,255,255,0.05);border:1px solid var(--card-border);border-radius:6px;color:var(--text-primary)" onchange="updateEditingLink(${index}, 'icon', this.value)">
+      <input type="text" value="${link.label}" placeholder="Label" style="flex:1;padding:8px;font-family:inherit;font-size:0.85em;background:rgba(255,255,255,0.05);border:1px solid var(--card-border);border-radius:6px;color:var(--text-primary)" onchange="updateEditingLink(${index}, 'label', this.value)">
+      <input type="text" value="${link.url}" placeholder="URL" style="flex:2;padding:8px;font-family:inherit;font-size:0.85em;background:rgba(255,255,255,0.05);border:1px solid var(--card-border);border-radius:6px;color:var(--text-primary)" onchange="updateEditingLink(${index}, 'url', this.value)">
+      <button onclick="removeEditingLink(${index})" style="padding:8px;background:rgba(239,68,68,0.2);border:1px solid rgba(239,68,68,0.3);border-radius:6px;color:var(--text-primary);cursor:pointer">&times;</button>
+    `;
+    editor.appendChild(row);
+  });
+}
+
+function updateEditingLink(index, field, value) {
+  editingLinks[index][field] = value;
+}
+
+function removeEditingLink(index) {
+  editingLinks.splice(index, 1);
+  renderLinksEditor();
+}
+
+function addNewLink() {
+  editingLinks.push({ icon: '🔗', label: 'New Link', url: 'https://' });
+  renderLinksEditor();
+}
+
+function saveLinks() {
+  quickLinks = editingLinks.filter(l => l.url && l.label);
+  localStorage.setItem('quickLinks', JSON.stringify(quickLinks));
+  renderQuickLinks();
+  closeLinksModal();
+}
+
+// ============================================
+// Font Size
+// ============================================
+function adjustFontSize(delta) {
+  let current = parseInt(localStorage.getItem('fontScale') || '100');
+  current = Math.max(70, Math.min(150, current + delta));
+  localStorage.setItem('fontScale', current.toString());
+  document.documentElement.style.setProperty('--font-scale', current / 100);
+  document.getElementById('fontSizeValue').textContent = current + '%';
+
+  // Mark theme as custom when manually adjusting
+  document.getElementById('themeSelect').value = 'custom';
+  localStorage.setItem('themePreset', 'custom');
+}
+
+function loadFontSize() {
+  const scale = localStorage.getItem('fontScale') || '100';
+  document.documentElement.style.setProperty('--font-scale', parseInt(scale) / 100);
+  document.getElementById('fontSizeValue').textContent = scale + '%';
+}
+
+// ============================================
+// Theme Presets
+// ============================================
+function applyThemePreset(preset) {
+  if (preset === 'custom') {
+    localStorage.setItem('themePreset', 'custom');
+    return;
+  }
+
+  const theme = themePresets[preset];
+  if (!theme) return;
+
+  // Apply colors
+  updateCardColor(theme.card, true);
+  updateAccentColor(theme.accent, true);
+  updateFontColor(theme.font, true);
+
+  // Update color pickers
+  document.getElementById('cardColorPicker').value = theme.card;
+  document.getElementById('accentColorPicker').value = theme.accent;
+  document.getElementById('fontColorPicker').value = theme.font;
+
+  // Apply background color to body
+  document.body.style.backgroundColor = theme.bg;
+  localStorage.setItem('themeBgColor', theme.bg);
+
+  localStorage.setItem('themePreset', preset);
+}
+
+function loadThemePreset() {
+  const preset = localStorage.getItem('themePreset') || 'custom';
+  document.getElementById('themeSelect').value = preset;
+
+  // Load background color if set
+  const bgColor = localStorage.getItem('themeBgColor');
+  if (bgColor) {
+    document.body.style.backgroundColor = bgColor;
+  }
+}
+</script>
+
+</body>
+</html>
