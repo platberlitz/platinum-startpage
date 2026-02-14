@@ -7,6 +7,11 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.min.js"></script>
 <style>
 :root {
   --bg: #0a0a0f;
@@ -130,6 +135,7 @@ body {
   display: flex;
   flex-direction: column;
   min-width: 0;
+  position: relative;
 }
 
 /* Header Toolbar */
@@ -533,6 +539,7 @@ body {
 @media (hover: none) {
   .msg-wrapper .msg-actions { display: flex; }
   .code-block-wrapper .code-copy-btn { opacity: 1; }
+  .code-block-wrapper .code-download-btn { opacity: 1; }
   .conv-item .conv-delete { display: block; }
 }
 
@@ -627,12 +634,219 @@ body {
   font-size: 0.8em;
   margin-left: auto;
 }
+
+/* Message fade-in animation */
+@keyframes msgFadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+.msg-new { animation: msgFadeIn 0.3s ease forwards; }
+
+/* Animated typing indicator */
+.typing-dots { display: inline-flex; align-items: center; gap: 4px; padding: 4px 0; }
+.typing-dots span { width: 6px; height: 6px; border-radius: 50%; background: var(--text-secondary); animation: typingBounce 1.2s ease-in-out infinite; }
+.typing-dots span:nth-child(2) { animation-delay: 0.15s; }
+.typing-dots span:nth-child(3) { animation-delay: 0.3s; }
+@keyframes typingBounce { 0%, 60%, 100% { transform: translateY(0); opacity: 0.4; } 30% { transform: translateY(-6px); opacity: 1; } }
+
+/* Scroll-to-bottom FAB */
+.scroll-fab {
+  position: absolute;
+  bottom: 12px;
+  right: 20px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: white;
+  border: none;
+  cursor: pointer;
+  font-size: 18px;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  transition: background 0.2s, transform 0.2s;
+}
+.scroll-fab:hover { background: var(--accent-hover); transform: scale(1.1); }
+.scroll-fab.visible { display: flex; }
+
+/* Toast notifications */
+.toast-container { position: fixed; top: 16px; right: 16px; z-index: 2000; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
+.toast {
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-size: 0.85em;
+  font-family: inherit;
+  color: white;
+  pointer-events: auto;
+  animation: toastIn 0.3s ease forwards;
+  max-width: 340px;
+  word-break: break-word;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+.toast.info { background: var(--accent); }
+.toast.error { background: #ef4444; }
+.toast.success { background: #22c55e; }
+.toast.removing { animation: toastOut 0.3s ease forwards; }
+@keyframes toastIn { from { opacity: 0; transform: translateX(40px); } to { opacity: 1; transform: translateX(0); } }
+@keyframes toastOut { from { opacity: 1; transform: translateX(0); } to { opacity: 0; transform: translateX(40px); } }
+
+/* Thinking/reasoning blocks */
+.thinking-block { margin-bottom: 8px; border-radius: 8px; background: var(--hover); overflow: hidden; font-size: 0.85em; }
+.thinking-header { padding: 8px 12px; cursor: pointer; color: var(--text-secondary); display: flex; align-items: center; gap: 6px; user-select: none; }
+.thinking-header:hover { color: var(--text-primary); }
+.thinking-content { display: none; padding: 4px 12px 8px; border-top: 1px solid var(--card-border); white-space: pre-wrap; color: var(--text-secondary); max-height: 300px; overflow-y: auto; }
+.thinking-content.open { display: block; }
+
+/* Line numbers in code blocks */
+.code-line { counter-increment: code-line; display: block; }
+.code-line::before { content: counter(code-line); display: inline-block; width: 2.5em; margin-right: 0.8em; text-align: right; color: var(--text-secondary); opacity: 0.4; user-select: none; -webkit-user-select: none; font-size: 0.85em; }
+pre.has-line-numbers { counter-reset: code-line; }
+
+/* Code download button */
+.code-download-btn {
+  position: absolute;
+  top: 6px;
+  right: 56px;
+  padding: 3px 8px;
+  font-size: 0.75em;
+  font-family: inherit;
+  background: rgba(255,255,255,0.15);
+  border: none;
+  border-radius: 4px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.2s, background 0.2s;
+}
+.code-block-wrapper:hover .code-download-btn { opacity: 1; }
+.code-download-btn:hover { background: rgba(255,255,255,0.25); color: var(--text-primary); }
+
+/* Mermaid container */
+.mermaid-container { margin: 6px 0; overflow-x: auto; }
+.mermaid-container svg { max-width: 100%; }
+
+/* Pin button on conversations */
+.conv-pin { display: none; background: none; border: none; color: var(--text-secondary); cursor: pointer; font-size: 12px; padding: 0 4px; flex-shrink: 0; opacity: 0.6; }
+.conv-item:hover .conv-pin { display: block; }
+.conv-pin.pinned { display: block; opacity: 1; color: var(--accent); }
+.conv-pin:hover { opacity: 1; }
+
+/* Date group headers */
+.conv-group-header { font-size: 0.7em; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; padding: 10px 12px 4px; }
+
+/* Drag-drop reorder */
+.conv-item.dragging { opacity: 0.4; }
+.conv-item.drag-over { border-top: 2px solid var(--accent); }
+
+/* Branch controls */
+.branch-controls { display: none; flex-direction: row; align-items: center; gap: 8px; margin-top: 6px; font-size: 0.8em; color: var(--text-secondary); }
+.branch-controls.has-branches { display: flex; }
+.branch-controls button { background: var(--hover); border: none; color: var(--text-secondary); padding: 3px 10px; border-radius: 6px; cursor: pointer; }
+.branch-controls button:hover { background: rgba(255,255,255,0.1); color: var(--text-primary); }
+.branch-controls button:disabled { opacity: 0.3; cursor: not-allowed; }
+
+/* Chat search bar */
+.chat-search-bar {
+  display: none;
+  padding: 6px 16px;
+  background: var(--sidebar-bg);
+  border-bottom: 1px solid var(--card-border);
+  gap: 8px;
+  align-items: center;
+}
+.chat-search-bar.open { display: flex; }
+.chat-search-bar input {
+  flex: 1;
+  padding: 6px 10px;
+  font-family: inherit;
+  font-size: 0.85em;
+  background: var(--hover);
+  border: 1px solid var(--card-border);
+  border-radius: 6px;
+  color: var(--text-primary);
+  outline: none;
+}
+.chat-search-bar input:focus { border-color: var(--accent); }
+.chat-search-bar button {
+  background: var(--hover);
+  border: none;
+  color: var(--text-secondary);
+  padding: 4px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.85em;
+}
+.chat-search-bar button:hover { color: var(--text-primary); }
+.chat-search-bar .search-count { font-size: 0.8em; color: var(--text-secondary); white-space: nowrap; }
+.search-highlight { background: rgba(255, 200, 50, 0.3); border-radius: 2px; }
+.search-highlight.active { background: rgba(255, 200, 50, 0.6); }
+
+/* @model mentions */
+.model-override-badge {
+  display: none;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  margin-bottom: 6px;
+  font-size: 0.8em;
+  background: var(--hover);
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  color: var(--accent);
+  width: fit-content;
+}
+.model-override-badge.visible { display: inline-flex; }
+.model-override-badge button {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 14px;
+  padding: 0;
+  line-height: 1;
+}
+.model-override-badge button:hover { color: var(--text-primary); }
+.mention-dropdown {
+  position: absolute;
+  bottom: 100%;
+  left: 50px;
+  background: var(--sidebar-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 8px;
+  max-height: 200px;
+  overflow-y: auto;
+  display: none;
+  z-index: 100;
+  min-width: 200px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+.mention-dropdown.open { display: block; }
+.mention-item {
+  padding: 8px 12px;
+  font-size: 0.85em;
+  cursor: pointer;
+  color: var(--text-secondary);
+}
+.mention-item:hover, .mention-item.active { background: var(--hover); color: var(--text-primary); }
+
+@media (hover: none) {
+  .scroll-fab { width: 44px; height: 44px; }
+  .conv-pin { display: block; }
+  .branch-controls button { padding: 8px 14px; min-height: 36px; }
+}
+@media (max-width: 768px) {
+  .toast { max-width: calc(100vw - 32px); }
+  .scroll-fab { width: 44px; height: 44px; bottom: 8px; right: 12px; }
+}
 </style>
 </head>
 <body>
 
 <!-- Sidebar overlay for mobile -->
 <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
+<!-- Toast container -->
+<div class="toast-container" id="toastContainer"></div>
 
 <!-- Sidebar -->
 <div class="sidebar" id="sidebar">
@@ -654,7 +868,8 @@ body {
       <span class="toolbar-title">AI Assistant</span>
     </div>
     <div class="toolbar-right">
-      <button class="toolbar-btn" onclick="exportConversation()" title="Export chat">&#8615;</button>
+      <button class="toolbar-btn" onclick="exportConversation()" title="Export chat (JSON)">&#8615;</button>
+      <button class="toolbar-btn" onclick="exportMarkdown()" title="Export as Markdown">&#128221;</button>
       <button class="toolbar-btn" onclick="exportAllConversations()" title="Export all conversations">&#8659;</button>
       <button class="toolbar-btn" onclick="document.getElementById('importInput').click()" title="Import chat">&#8613;</button>
       <input type="file" id="importInput" accept=".json" style="display:none" onchange="importConversation(event)">
@@ -664,15 +879,30 @@ body {
     </div>
   </div>
 
+  <!-- Chat search bar -->
+  <div class="chat-search-bar" id="chatSearchBar">
+    <input type="text" id="chatSearchInput" placeholder="Search in chat..." oninput="debouncedChatSearch()">
+    <span class="search-count" id="chatSearchCount"></span>
+    <button onclick="navigateChatSearch(-1)" title="Previous">&#9650;</button>
+    <button onclick="navigateChatSearch(1)" title="Next">&#9660;</button>
+    <button onclick="closeChatSearch()" title="Close">&times;</button>
+  </div>
+
   <!-- Messages -->
   <div class="messages-area" id="messagesArea">
     <div class="chat-placeholder">Start a conversation...</div>
   </div>
+  <button class="scroll-fab" id="scrollFab" onclick="document.getElementById('messagesArea').scrollTo({top:document.getElementById('messagesArea').scrollHeight,behavior:'smooth'})" title="Scroll to bottom">&#8595;</button>
 
   <!-- Input -->
   <div class="input-area">
     <div class="image-preview" id="imagePreview"></div>
-    <div class="input-row">
+    <div class="model-override-badge" id="modelOverrideBadge">
+      <span id="modelOverrideText"></span>
+      <button onclick="clearModelOverride()" title="Clear override">&times;</button>
+    </div>
+    <div class="input-row" style="position:relative">
+      <div class="mention-dropdown" id="mentionDropdown"></div>
       <button class="input-btn" onclick="document.getElementById('fileInput').click()" title="Attach image">&#128206;</button>
       <input type="file" id="fileInput" accept="image/*" multiple style="display:none" onchange="handleFileSelect(event)">
       <textarea id="chatInput" placeholder="Type a message..." rows="1"></textarea>
@@ -694,10 +924,10 @@ body {
     <input type="password" id="setupKey" placeholder="sk-...">
     <label>Model</label>
     <div class="model-selector-row">
-      <select id="setupModelSelect"><option value="">-- Fetch models first --</option></select>
+      <select id="setupModelSelect" onchange="document.getElementById('setupModelManual').value=''"><option value="">-- Fetch models first --</option></select>
       <button class="model-refresh-btn" onclick="refreshModels('setup')" title="Refresh model list">&#x1F504;</button>
     </div>
-    <input type="text" id="setupModelManual" placeholder="Or type model name manually" value="gpt-4o">
+    <input type="text" id="setupModelManual" placeholder="Or type model name manually" value="gpt-4o" oninput="document.getElementById('setupModelSelect').value=''">
     <div class="modal-actions">
       <button class="btn btn-primary" onclick="saveSetup()">Get Started</button>
     </div>
@@ -716,10 +946,10 @@ body {
     <input type="password" id="setKey">
     <label>Model</label>
     <div class="model-selector-row">
-      <select id="setModelSelect"><option value="">-- Fetch models first --</option></select>
+      <select id="setModelSelect" onchange="document.getElementById('setModelManual').value=''"><option value="">-- Fetch models first --</option></select>
       <button class="model-refresh-btn" onclick="refreshModels('settings')" title="Refresh model list">&#x1F504;</button>
     </div>
-    <input type="text" id="setModelManual" placeholder="Or type model name manually">
+    <input type="text" id="setModelManual" placeholder="Or type model name manually" oninput="document.getElementById('setModelSelect').value=''">
     <label>API Format</label>
     <select id="setApiFormat">
       <option value="auto">Auto-detect</option>
@@ -792,6 +1022,28 @@ body {
   </div>
 </div>
 
+<!-- Keyboard Shortcuts Modal -->
+<div class="modal-overlay" id="shortcutsModal">
+  <div class="modal" style="max-width:480px">
+    <h2>Keyboard Shortcuts</h2>
+    <div style="display:grid;grid-template-columns:auto 1fr;gap:8px 16px;font-size:0.85em">
+      <kbd style="background:var(--hover);padding:2px 8px;border-radius:4px;font-family:inherit;white-space:nowrap">Enter</kbd><span>Send message</span>
+      <kbd style="background:var(--hover);padding:2px 8px;border-radius:4px;font-family:inherit;white-space:nowrap">Shift+Enter</kbd><span>New line in input</span>
+      <kbd style="background:var(--hover);padding:2px 8px;border-radius:4px;font-family:inherit;white-space:nowrap">Ctrl+N</kbd><span>New conversation</span>
+      <kbd style="background:var(--hover);padding:2px 8px;border-radius:4px;font-family:inherit;white-space:nowrap">Ctrl+/</kbd><span>Focus input</span>
+      <kbd style="background:var(--hover);padding:2px 8px;border-radius:4px;font-family:inherit;white-space:nowrap">Ctrl+K</kbd><span>Search conversations</span>
+      <kbd style="background:var(--hover);padding:2px 8px;border-radius:4px;font-family:inherit;white-space:nowrap">Ctrl+F</kbd><span>Search in current chat</span>
+      <kbd style="background:var(--hover);padding:2px 8px;border-radius:4px;font-family:inherit;white-space:nowrap">Ctrl+Shift+E</kbd><span>Export all conversations</span>
+      <kbd style="background:var(--hover);padding:2px 8px;border-radius:4px;font-family:inherit;white-space:nowrap">Escape</kbd><span>Close modal / Stop streaming</span>
+      <kbd style="background:var(--hover);padding:2px 8px;border-radius:4px;font-family:inherit;white-space:nowrap">Ctrl+Shift+?</kbd><span>Show this help</span>
+      <kbd style="background:var(--hover);padding:2px 8px;border-radius:4px;font-family:inherit;white-space:nowrap">@model</kbd><span>Override model for one message</span>
+    </div>
+    <div class="modal-actions" style="margin-top:16px">
+      <button class="btn btn-primary" onclick="document.getElementById('shortcutsModal').classList.remove('open')">Close</button>
+    </div>
+  </div>
+</div>
+
 <script>
 // ============================================
 // State
@@ -803,6 +1055,24 @@ let abortController = null;
 let streaming = false;
 let pendingImages = [];
 let voiceRec = null;
+let modelOverride = null;
+let mentionActive = false;
+let mentionIdx = 0;
+
+// ============================================
+// Toast Notifications
+// ============================================
+function showToast(message, type = 'info', duration = 3000) {
+  const container = document.getElementById('toastContainer');
+  const toast = document.createElement('div');
+  toast.className = 'toast ' + type;
+  toast.textContent = message;
+  container.appendChild(toast);
+  setTimeout(() => {
+    toast.classList.add('removing');
+    setTimeout(() => toast.remove(), 300);
+  }, duration);
+}
 
 // ============================================
 // Theme Presets
@@ -1002,7 +1272,7 @@ async function refreshModels(target) {
   const keyInput = document.getElementById(target === 'setup' ? 'setupKey' : 'setKey');
   let baseUrl = proxyInput.value.trim().replace(/\/(chat\/completions|messages)\/?$/, '');
   const apiKey = keyInput.value.trim();
-  if (!baseUrl || !apiKey) { alert('Enter Base URL and API Key first.'); return; }
+  if (!baseUrl || !apiKey) { showToast('Enter Base URL and API Key first.', 'error'); return; }
   const btn = event.target;
   btn.textContent = '...';
   btn.disabled = true;
@@ -1011,7 +1281,7 @@ async function refreshModels(target) {
     localStorage.setItem('llmModelList', JSON.stringify(models));
     populateModelSelect(target, models);
   } catch (e) {
-    alert('Failed to fetch models: ' + e.message);
+    showToast('Failed to fetch models: ' + e.message, 'error');
   } finally {
     btn.textContent = '\u{1F504}';
     btn.disabled = false;
@@ -1110,16 +1380,21 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('voiceBtn').style.display = 'none';
   }
 
-  // Auto-resize textarea + character count
+  // Auto-resize textarea + character count + @model mentions
   const ta = document.getElementById('chatInput');
   ta.addEventListener('input', () => {
     ta.style.height = 'auto';
     ta.style.height = Math.min(ta.scrollHeight, 150) + 'px';
     updateTokenInfo();
+    handleMentionInput(ta);
   });
 
-  // Send on Enter
+  // Send on Enter (with mention dropdown handling)
   ta.addEventListener('keydown', (e) => {
+    if (mentionActive) {
+      handleMentionKeydown(e, ta);
+      if (e.defaultPrevented) return;
+    }
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       sendMessage();
@@ -1130,9 +1405,14 @@ document.addEventListener('DOMContentLoaded', () => {
   document.addEventListener('keydown', (e) => {
     // Escape - close modals / stop streaming
     if (e.key === 'Escape') {
+      if (document.getElementById('chatSearchBar').classList.contains('open')) {
+        closeChatSearch();
+        return;
+      }
       if (streaming && abortController) abortController.abort();
       document.getElementById('settingsModal').classList.remove('open');
       document.getElementById('setupModal').classList.remove('open');
+      document.getElementById('shortcutsModal').classList.remove('open');
     }
     // Ctrl+N - new conversation
     if (e.ctrlKey && e.key === 'n') {
@@ -1155,6 +1435,16 @@ document.addEventListener('DOMContentLoaded', () => {
     if (e.ctrlKey && e.shiftKey && e.key === 'E') {
       e.preventDefault();
       exportAllConversations();
+    }
+    // Ctrl+F - chat search
+    if (e.ctrlKey && e.key === 'f') {
+      e.preventDefault();
+      openChatSearch();
+    }
+    // Ctrl+Shift+? - shortcut help
+    if (e.ctrlKey && e.shiftKey && e.key === '?') {
+      e.preventDefault();
+      document.getElementById('shortcutsModal').classList.add('open');
     }
   });
 
@@ -1180,6 +1470,19 @@ document.addEventListener('DOMContentLoaded', () => {
   if (window.innerWidth <= 768) {
     document.getElementById('sidebar').classList.add('collapsed');
   }
+
+  // Scroll-to-bottom FAB
+  const msgsArea = document.getElementById('messagesArea');
+  const scrollFab = document.getElementById('scrollFab');
+  msgsArea.addEventListener('scroll', () => {
+    const atBottom = msgsArea.scrollHeight - msgsArea.scrollTop - msgsArea.clientHeight < 100;
+    scrollFab.classList.toggle('visible', !atBottom);
+  });
+
+  // Initialize mermaid
+  if (typeof mermaid !== 'undefined') {
+    mermaid.initialize({ startOnLoad: false, theme: 'dark' });
+  }
 });
 
 // ============================================
@@ -1187,9 +1490,29 @@ document.addEventListener('DOMContentLoaded', () => {
 // ============================================
 function renderMarkdown(text) {
   if (!text) return '';
-  let s = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+  // Extract KaTeX math before HTML escaping
+  const mathPlaceholders = [];
+  let s = text;
+  // Block math $$...$$
+  s = s.replace(/\$\$([\s\S]+?)\$\$/g, (_, math) => {
+    const idx = mathPlaceholders.length;
+    mathPlaceholders.push({ math, display: true });
+    return '\x00MATH' + idx + '\x00';
+  });
+  // Inline math $...$
+  s = s.replace(/\$([^\$\n]+?)\$/g, (_, math) => {
+    const idx = mathPlaceholders.length;
+    mathPlaceholders.push({ math, display: false });
+    return '\x00MATH' + idx + '\x00';
+  });
+
+  s = s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  // Mermaid code blocks
+  s = s.replace(/```mermaid\n([\s\S]*?)```/g, (_, code) =>
+    '<div class="mermaid-container"><pre class="mermaid">' + code.trimEnd() + '</pre></div>');
   s = s.replace(/```(\w*)\n([\s\S]*?)```/g, (_, lang, code) =>
-    '<pre><code' + (lang ? ' class="lang-' + lang + '"' : '') + '>' + code.trimEnd() + '</code></pre>');
+    '<pre><code' + (lang ? ' class="language-' + lang + '"' : '') + '>' + code.trimEnd() + '</code></pre>');
   s = s.replace(/`([^`\n]+)`/g, '<code>$1</code>');
   s = s.replace(/^#### (.+)$/gm, '<h4>$1</h4>');
   s = s.replace(/^### (.+)$/gm, '<h3>$1</h3>');
@@ -1204,8 +1527,18 @@ function renderMarkdown(text) {
   s = s.replace(/^\d+\. (.+)$/gm, '<li>$1</li>');
   s = s.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
   s = s.replace(/^---$/gm, '<hr>');
-  const parts = s.split(/(<pre>[\s\S]*?<\/pre>)/g);
-  s = parts.map(part => part.startsWith('<pre>') ? part : part.replace(/\n/g, '<br>')).join('');
+  const parts = s.split(/(<pre>[\s\S]*?<\/pre>|<div class="mermaid-container">[\s\S]*?<\/div>)/g);
+  s = parts.map(part => (part.startsWith('<pre>') || part.startsWith('<div class="mermaid')) ? part : part.replace(/\n/g, '<br>')).join('');
+
+  // Restore KaTeX math placeholders
+  s = s.replace(/\x00MATH(\d+)\x00/g, (_, idx) => {
+    const ph = mathPlaceholders[parseInt(idx)];
+    if (typeof katex !== 'undefined') {
+      try { return katex.renderToString(ph.math, { displayMode: ph.display, throwOnError: false }); } catch(e) {}
+    }
+    return (ph.display ? '$$' : '$') + ph.math.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;') + (ph.display ? '$$' : '$');
+  });
+
   return s;
 }
 
@@ -1213,8 +1546,10 @@ function renderMarkdown(text) {
 // Code Copy Buttons
 // ============================================
 function addCodeCopyButtons(container) {
+  const langExtMap = { javascript: 'js', js: 'js', typescript: 'ts', ts: 'ts', python: 'py', py: 'py', java: 'java', c: 'c', cpp: 'cpp', csharp: 'cs', cs: 'cs', go: 'go', rust: 'rs', ruby: 'rb', php: 'php', html: 'html', css: 'css', json: 'json', xml: 'xml', yaml: 'yaml', yml: 'yml', sql: 'sql', bash: 'sh', sh: 'sh', shell: 'sh', markdown: 'md', md: 'md', swift: 'swift', kotlin: 'kt', lua: 'lua', r: 'r', perl: 'pl', scala: 'scala', dart: 'dart', zig: 'zig', nim: 'nim', elixir: 'ex', clojure: 'clj', haskell: 'hs', ocaml: 'ml', toml: 'toml', ini: 'ini', dockerfile: 'dockerfile', makefile: 'makefile' };
   container.querySelectorAll('pre').forEach(pre => {
     if (pre.parentElement.classList.contains('code-block-wrapper')) return;
+    if (pre.classList.contains('mermaid')) return;
     const wrapper = document.createElement('div');
     wrapper.className = 'code-block-wrapper';
     pre.parentNode.insertBefore(wrapper, pre);
@@ -1230,7 +1565,88 @@ function addCodeCopyButtons(container) {
       setTimeout(() => btn.textContent = 'Copy', 2000);
     };
     wrapper.appendChild(btn);
+    // Download button
+    const code = pre.querySelector('code');
+    if (code) {
+      const cls = Array.from(code.classList).find(c => c.startsWith('language-'));
+      const lang = cls ? cls.replace('language-', '') : '';
+      const ext = langExtMap[lang] || lang || 'txt';
+      const dlBtn = document.createElement('button');
+      dlBtn.className = 'code-download-btn';
+      dlBtn.textContent = '\u2913';
+      dlBtn.title = 'Download as .' + ext;
+      dlBtn.onclick = (e) => {
+        e.stopPropagation();
+        const blob = new Blob([code.textContent], { type: 'text/plain' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'code.' + ext;
+        a.click();
+        URL.revokeObjectURL(a.href);
+      };
+      wrapper.appendChild(dlBtn);
+    }
   });
+}
+
+// ============================================
+// Syntax Highlighting
+// ============================================
+function highlightCodeBlocks(container) {
+  if (typeof hljs === 'undefined') return;
+  container.querySelectorAll('pre code[class^="language-"]').forEach(el => {
+    if (el.dataset.highlighted) return;
+    hljs.highlightElement(el);
+    el.dataset.highlighted = 'true';
+  });
+}
+
+// ============================================
+// Line Numbers
+// ============================================
+function addLineNumbers(container) {
+  container.querySelectorAll('pre code').forEach(code => {
+    if (code.parentElement.classList.contains('has-line-numbers')) return;
+    if (code.parentElement.classList.contains('mermaid')) return;
+    const lines = code.innerHTML.split('\n');
+    if (lines.length < 3) return;
+    // Remove trailing empty line if present
+    if (lines[lines.length - 1].trim() === '') lines.pop();
+    code.innerHTML = lines.map(l => '<span class="code-line">' + l + '</span>').join('\n');
+    code.parentElement.classList.add('has-line-numbers');
+  });
+}
+
+// ============================================
+// Mermaid Rendering
+// ============================================
+let mermaidIdCounter = 0;
+async function renderMermaidBlocks(container) {
+  if (typeof mermaid === 'undefined') return;
+  const pres = container.querySelectorAll('pre.mermaid');
+  for (const pre of pres) {
+    if (pre.dataset.rendered) continue;
+    pre.dataset.rendered = 'true';
+    try {
+      const id = 'mermaid-' + (mermaidIdCounter++);
+      const { svg } = await mermaid.render(id, pre.textContent);
+      const div = document.createElement('div');
+      div.innerHTML = svg;
+      pre.replaceWith(div.firstElementChild);
+    } catch (e) {
+      pre.textContent = 'Mermaid error: ' + e.message;
+    }
+  }
+}
+
+// ============================================
+// Post-Render Pipeline
+// ============================================
+function postRenderProcessing(bubble) {
+  addCodeCopyButtons(bubble);
+  highlightCodeBlocks(bubble);
+  addLineNumbers(bubble);
+  renderMermaidBlocks(bubble);
 }
 
 // ============================================
@@ -1359,10 +1775,85 @@ function deleteConversation(id, e) {
 function renderSidebar() {
   const list = document.getElementById('convList');
   list.innerHTML = '';
-  conversations.forEach(c => {
+
+  // Sort: pinned first (by updatedAt desc), then unpinned by updatedAt desc
+  // If any have sortOrder, use that instead
+  const hasSortOrder = conversations.some(c => c.sortOrder != null);
+  const sorted = [...conversations].sort((a, b) => {
+    if (a.pinned && !b.pinned) return -1;
+    if (!a.pinned && b.pinned) return 1;
+    if (hasSortOrder && a.sortOrder != null && b.sortOrder != null) return a.sortOrder - b.sortOrder;
+    return (b.updatedAt || 0) - (a.updatedAt || 0);
+  });
+
+  // Date grouping
+  const now = new Date();
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  const yesterdayStart = todayStart - 86400000;
+  const weekStart = todayStart - 7 * 86400000;
+  const monthStart = todayStart - 30 * 86400000;
+
+  function getGroup(c) {
+    if (c.pinned) return 'Pinned';
+    const t = c.updatedAt || c.createdAt || 0;
+    if (t >= todayStart) return 'Today';
+    if (t >= yesterdayStart) return 'Yesterday';
+    if (t >= weekStart) return 'Last 7 Days';
+    if (t >= monthStart) return 'Last 30 Days';
+    return 'Older';
+  }
+
+  let lastGroup = '';
+  sorted.forEach((c, sortIdx) => {
+    const group = getGroup(c);
+    if (group !== lastGroup) {
+      const header = document.createElement('div');
+      header.className = 'conv-group-header';
+      header.textContent = group;
+      header.dataset.group = group;
+      list.appendChild(header);
+      lastGroup = group;
+    }
+
     const div = document.createElement('div');
     div.className = 'conv-item' + (c.id === activeConvId ? ' active' : '');
     div.onclick = () => switchConversation(c.id);
+    div.dataset.convId = c.id;
+
+    // Drag-and-drop (desktop only)
+    div.draggable = true;
+    div.addEventListener('dragstart', (e) => {
+      e.dataTransfer.setData('text/plain', c.id);
+      div.classList.add('dragging');
+    });
+    div.addEventListener('dragend', () => div.classList.remove('dragging'));
+    div.addEventListener('dragover', (e) => { e.preventDefault(); div.classList.add('drag-over'); });
+    div.addEventListener('dragleave', () => div.classList.remove('drag-over'));
+    div.addEventListener('drop', (e) => {
+      e.preventDefault();
+      div.classList.remove('drag-over');
+      const draggedId = e.dataTransfer.getData('text/plain');
+      if (draggedId === c.id) return;
+      const fromIdx = conversations.findIndex(x => x.id === draggedId);
+      const toIdx = conversations.findIndex(x => x.id === c.id);
+      if (fromIdx === -1 || toIdx === -1) return;
+      const [moved] = conversations.splice(fromIdx, 1);
+      conversations.splice(toIdx, 0, moved);
+      conversations.forEach((x, i) => x.sortOrder = i);
+      saveConversations();
+      renderSidebar();
+    });
+
+    const pinBtn = document.createElement('button');
+    pinBtn.className = 'conv-pin' + (c.pinned ? ' pinned' : '');
+    pinBtn.innerHTML = '&#128204;';
+    pinBtn.title = c.pinned ? 'Unpin' : 'Pin';
+    pinBtn.onclick = (e) => {
+      e.stopPropagation();
+      c.pinned = !c.pinned;
+      saveConversations();
+      renderSidebar();
+    };
 
     const title = document.createElement('span');
     title.className = 'conv-title';
@@ -1373,6 +1864,7 @@ function renderSidebar() {
     del.innerHTML = '&times;';
     del.onclick = (e) => deleteConversation(c.id, e);
 
+    div.appendChild(pinBtn);
     div.appendChild(title);
     div.appendChild(del);
     list.appendChild(div);
@@ -1390,6 +1882,16 @@ function filterConversations() {
   items.forEach(item => {
     const title = item.querySelector('.conv-title').textContent.toLowerCase();
     item.style.display = (!query || title.includes(query)) ? '' : 'none';
+  });
+  // Hide empty group headers
+  document.querySelectorAll('.conv-group-header').forEach(header => {
+    let next = header.nextElementSibling;
+    let hasVisible = false;
+    while (next && !next.classList.contains('conv-group-header')) {
+      if (next.classList.contains('conv-item') && next.style.display !== 'none') hasVisible = true;
+      next = next.nextElementSibling;
+    }
+    header.style.display = hasVisible ? '' : 'none';
   });
 }
 
@@ -1417,7 +1919,7 @@ function getSelectedModel(target) {
 function saveSetup() {
   let proxy = document.getElementById('setupProxy').value.trim();
   const key = document.getElementById('setupKey').value.trim();
-  if (!proxy || !key) { alert('Base URL and API Key are required.'); return; }
+  if (!proxy || !key) { showToast('Base URL and API Key are required.', 'error'); return; }
   proxy = proxy.replace(/\/(chat\/completions|messages)\/?$/, '');
   const model = getSelectedModel('setup');
   localStorage.setItem('llmProxyUrl', proxy);
@@ -1476,7 +1978,7 @@ function saveSettings() {
       extraParamsField.classList.remove('invalid');
     } catch(e) {
       extraParamsField.classList.add('invalid');
-      alert('Extra Parameters must be valid JSON.');
+      showToast('Extra Parameters must be valid JSON.', 'error');
       return;
     }
   } else {
@@ -1533,6 +2035,7 @@ function closeSettings() {
 // Render Messages
 // ============================================
 function renderMessages() {
+  closeChatSearch();
   const area = document.getElementById('messagesArea');
   area.innerHTML = '';
 
@@ -1571,9 +2074,10 @@ function renderMessages() {
         bubble.textContent = msg.content;
       }
     } else if (msg.role === 'assistant') {
+      const thinkData = msg.swipeThinking && msg.swipeThinking[msg.swipeIndex];
       const toolData = msg.swipeToolUse && msg.swipeToolUse[msg.swipeIndex];
-      bubble.innerHTML = renderToolBlocksHTML(toolData || []) + renderMarkdown(msg.content);
-      addCodeCopyButtons(bubble);
+      bubble.innerHTML = renderThinkingHTML(thinkData || '') + renderToolBlocksHTML(toolData || []) + renderMarkdown(msg.content);
+      postRenderProcessing(bubble);
     } else {
       bubble.textContent = msg.content;
     }
@@ -1616,6 +2120,26 @@ function renderMessages() {
 
     wrapper.appendChild(actions);
 
+    // Branch controls for user messages
+    if (msg.role === 'user' && msg.branches && msg.branches.length > 1) {
+      const branchDiv = document.createElement('div');
+      branchDiv.className = 'branch-controls has-branches';
+      const bPrev = document.createElement('button');
+      bPrev.textContent = '\u25C0';
+      bPrev.disabled = msg.branchIndex <= 0;
+      bPrev.onclick = () => switchBranch(idx, -1);
+      const bCounter = document.createElement('span');
+      bCounter.textContent = (msg.branchIndex + 1) + '/' + msg.branches.length;
+      const bNext = document.createElement('button');
+      bNext.textContent = '\u25B6';
+      bNext.disabled = msg.branchIndex >= msg.branches.length - 1;
+      bNext.onclick = () => switchBranch(idx, 1);
+      branchDiv.appendChild(bPrev);
+      branchDiv.appendChild(bCounter);
+      branchDiv.appendChild(bNext);
+      wrapper.appendChild(branchDiv);
+    }
+
     if (msg.role === 'assistant') {
       // Swipe controls
       const swipeDiv = document.createElement('div');
@@ -1641,6 +2165,9 @@ function renderMessages() {
       regen.onclick = () => regenerate();
       wrapper.appendChild(regen);
     }
+
+    // Fade-in on last message only
+    if (idx === messages.length - 1) wrapper.classList.add('msg-new');
 
     area.appendChild(wrapper);
   });
@@ -1668,13 +2195,32 @@ function renderEditMode(area, msg, idx) {
   const saveBtn = document.createElement('button');
   saveBtn.className = 'msg-edit-save';
   saveBtn.textContent = 'Save & Resend';
-  saveBtn.onclick = () => {
-    msg.content = ta.value;
+  saveBtn.onclick = async () => {
+    const editedText = ta.value;
     delete msg._editing;
+
+    // Save old branch before truncating
+    const oldBranch = messages.slice(idx);
+    if (!msg.branches) {
+      msg.branches = [oldBranch];
+      msg.branchIndex = 1;
+    } else {
+      // Save current continuation as current branch before editing
+      msg.branches[msg.branchIndex] = oldBranch;
+      msg.branchIndex = msg.branches.length;
+    }
+
+    msg.content = editedText;
     messages.length = idx + 1;
     saveConversations();
     renderMessages();
-    resendAfterEdit();
+    await resendAfterEdit();
+
+    // Save new branch (after response)
+    const newBranch = messages.slice(idx);
+    msg.branches[msg.branchIndex] = newBranch;
+    saveConversations();
+    renderMessages();
   };
 
   editActions.appendChild(cancelBtn);
@@ -1698,7 +2244,7 @@ async function resendAfterEdit() {
   wrapper.className = 'msg-wrapper assistant';
   const bubble = document.createElement('div');
   bubble.className = 'msg-bubble assistant';
-  bubble.innerHTML = '<span style="color:var(--text-secondary)">Thinking...</span>';
+  bubble.innerHTML = '<div class="typing-dots"><span></span><span></span><span></span></div>';
   wrapper.appendChild(bubble);
   area.appendChild(wrapper);
   area.scrollTop = area.scrollHeight;
@@ -1726,6 +2272,39 @@ function swipeMsg(idx, dir) {
   msg.content = msg.swipes[msg.swipeIndex];
   saveConversations();
   renderMessages();
+}
+
+// ============================================
+// Branch Switching
+// ============================================
+function switchBranch(msgIdx, dir) {
+  const msg = messages[msgIdx];
+  if (!msg || !msg.branches) return;
+  // Save current continuation as the current branch
+  msg.branches[msg.branchIndex] = messages.slice(msgIdx);
+  // Switch
+  const newIdx = Math.max(0, Math.min(msg.branches.length - 1, msg.branchIndex + dir));
+  if (newIdx === msg.branchIndex) return;
+  msg.branchIndex = newIdx;
+  // Replace messages from msgIdx onward with the selected branch
+  const branch = msg.branches[msg.branchIndex];
+  messages.length = msgIdx;
+  branch.forEach(m => messages.push(m));
+  saveConversations();
+  renderMessages();
+  updateTokenInfo();
+}
+
+// ============================================
+// Thinking/Reasoning Rendering
+// ============================================
+function renderThinkingHTML(text) {
+  if (!text) return '';
+  const escaped = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  return '<div class="thinking-block">' +
+    '<div class="thinking-header" onclick="this.nextElementSibling.classList.toggle(\'open\');this.querySelector(\'.thinking-arrow\').textContent=this.nextElementSibling.classList.contains(\'open\')?\'\u25BE\':\'\u25B8\'">' +
+    '\uD83D\uDCAD Thinking <span class="thinking-arrow">\u25B8</span></div>' +
+    '<div class="thinking-content">' + escaped + '</div></div>';
 }
 
 // ============================================
@@ -1761,10 +2340,10 @@ function renderToolBlocksHTML(toolBlocks) {
 // ============================================
 // Streaming
 // ============================================
-async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl) {
+async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, overrideModel) {
   const baseUrl = (localStorage.getItem('llmProxyUrl') || '').replace(/\/+$/, '');
   const apiKey = localStorage.getItem('llmApiKey');
-  const model = localStorage.getItem('llmModel') || 'gpt-4o';
+  const model = overrideModel || localStorage.getItem('llmModel') || 'gpt-4o';
   const format = detectApiFormat(model);
 
   // Extra params & excludes
@@ -1780,6 +2359,7 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl) {
   btn.disabled = false;
 
   let fullText = '';
+  let thinkingText = '';
   let lastRender = 0;
   let toolBlocks = [];
   let currentBlockType = null;
@@ -1834,6 +2414,8 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl) {
       const data = await resp.json();
       if (format === 'anthropic') {
         fullText = (data.content || []).filter(c => c.type === 'text').map(c => c.text).join('') || 'No response.';
+        // Extract thinking blocks from non-streaming response
+        thinkingText = (data.content || []).filter(c => c.type === 'thinking').map(c => c.thinking).join('');
         // Extract tool blocks from non-streaming response
         for (const block of (data.content || [])) {
           if (block.type === 'server_tool_use' && block.name === 'web_search') {
@@ -1847,15 +2429,20 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl) {
         }
       } else {
         fullText = data.choices?.[0]?.message?.content || 'No response.';
+        thinkingText = data.choices?.[0]?.message?.reasoning_content || '';
       }
       assistantMsg.swipes[swipeIdx] = fullText;
       assistantMsg.content = fullText;
+      if (thinkingText) {
+        assistantMsg.swipeThinking = assistantMsg.swipeThinking || [];
+        assistantMsg.swipeThinking[swipeIdx] = thinkingText;
+      }
       if (toolBlocks.length > 0) {
         assistantMsg.swipeToolUse = assistantMsg.swipeToolUse || [];
         assistantMsg.swipeToolUse[swipeIdx] = toolBlocks;
       }
-      bubbleEl.innerHTML = renderToolBlocksHTML(toolBlocks) + renderMarkdown(fullText);
-      addCodeCopyButtons(bubbleEl);
+      bubbleEl.innerHTML = renderThinkingHTML(thinkingText) + renderToolBlocksHTML(toolBlocks) + renderMarkdown(fullText);
+      postRenderProcessing(bubbleEl);
     } else {
       // SSE streaming
       const reader = resp.body.getReader();
@@ -1893,10 +2480,14 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl) {
                   }
                 } else if (cb && cb.type === 'text') {
                   currentBlockType = 'text';
+                } else if (cb && cb.type === 'thinking') {
+                  currentBlockType = 'thinking';
                 }
               } else if (json.type === 'content_block_delta') {
                 if (json.delta?.type === 'text_delta' && json.delta?.text) {
                   fullText += json.delta.text;
+                } else if (json.delta?.type === 'thinking_delta' && json.delta?.thinking) {
+                  thinkingText += json.delta.thinking;
                 } else if (json.delta?.type === 'input_json_delta' && json.delta?.partial_json) {
                   inputJsonBuf += json.delta.partial_json;
                 }
@@ -1925,6 +2516,8 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl) {
               const json = JSON.parse(payload);
               const delta = json.choices?.[0]?.delta?.content;
               if (delta) fullText += delta;
+              const reasoning = json.choices?.[0]?.delta?.reasoning_content;
+              if (reasoning) thinkingText += reasoning;
             } catch(e) {}
           }
         }
@@ -1933,17 +2526,21 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl) {
         assistantMsg.content = fullText;
         const now = Date.now();
         if (now - lastRender > 80) {
-          bubbleEl.innerHTML = renderToolBlocksHTML(toolBlocks) + renderMarkdown(fullText);
+          bubbleEl.innerHTML = renderThinkingHTML(thinkingText) + renderToolBlocksHTML(toolBlocks) + renderMarkdown(fullText);
           document.getElementById('messagesArea').scrollTop = document.getElementById('messagesArea').scrollHeight;
           lastRender = now;
         }
+      }
+      if (thinkingText) {
+        assistantMsg.swipeThinking = assistantMsg.swipeThinking || [];
+        assistantMsg.swipeThinking[swipeIdx] = thinkingText;
       }
       if (toolBlocks.length > 0) {
         assistantMsg.swipeToolUse = assistantMsg.swipeToolUse || [];
         assistantMsg.swipeToolUse[swipeIdx] = toolBlocks;
       }
-      bubbleEl.innerHTML = renderToolBlocksHTML(toolBlocks) + renderMarkdown(fullText);
-      addCodeCopyButtons(bubbleEl);
+      bubbleEl.innerHTML = renderThinkingHTML(thinkingText) + renderToolBlocksHTML(toolBlocks) + renderMarkdown(fullText);
+      postRenderProcessing(bubbleEl);
     }
   } catch (e) {
     if (e.name === 'AbortError') {
@@ -1953,11 +2550,15 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl) {
     }
     assistantMsg.swipes[swipeIdx] = fullText;
     assistantMsg.content = fullText;
+    if (thinkingText) {
+      assistantMsg.swipeThinking = assistantMsg.swipeThinking || [];
+      assistantMsg.swipeThinking[swipeIdx] = thinkingText;
+    }
     if (toolBlocks.length > 0) {
       assistantMsg.swipeToolUse = assistantMsg.swipeToolUse || [];
       assistantMsg.swipeToolUse[swipeIdx] = toolBlocks;
     }
-    bubbleEl.innerHTML = renderToolBlocksHTML(toolBlocks) + renderMarkdown(fullText);
+    bubbleEl.innerHTML = renderThinkingHTML(thinkingText) + renderToolBlocksHTML(toolBlocks) + renderMarkdown(fullText);
   } finally {
     streaming = false;
     abortController = null;
@@ -2019,7 +2620,7 @@ async function sendMessage() {
   wrapper.className = 'msg-wrapper assistant';
   const bubble = document.createElement('div');
   bubble.className = 'msg-bubble assistant';
-  bubble.innerHTML = '<span style="color:var(--text-secondary)">Thinking...</span>';
+  bubble.innerHTML = '<div class="typing-dots"><span></span><span></span><span></span></div>';
   wrapper.appendChild(bubble);
   area.appendChild(wrapper);
   area.scrollTop = area.scrollHeight;
@@ -2028,7 +2629,11 @@ async function sendMessage() {
   if (persona) apiMessages.push({ role: 'system', content: 'About the user: ' + persona });
   messages.forEach(m => { if (m.role !== 'system') apiMessages.push({ role: m.role, content: m.content }); });
 
-  await streamResponse(apiMessages, assistantMsg, 0, bubble);
+  // Capture and clear model override
+  const overrideModel = modelOverride;
+  clearModelOverride();
+
+  await streamResponse(apiMessages, assistantMsg, 0, bubble, overrideModel);
 
   if (messages.length > 50) messages.splice(0, messages.length - 50);
   if (conv) conv.updatedAt = Date.now();
@@ -2059,7 +2664,7 @@ async function regenerate() {
   const wrappers = area.querySelectorAll('.msg-wrapper.assistant');
   const lastWrapper = wrappers[wrappers.length - 1];
   const bubble = lastWrapper.querySelector('.msg-bubble');
-  bubble.innerHTML = '<span style="color:var(--text-secondary)">Thinking...</span>';
+  bubble.innerHTML = '<div class="typing-dots"><span></span><span></span><span></span></div>';
 
   const systemPrompt = localStorage.getItem('llmSystemPrompt') || 'You are a helpful assistant.';
   const persona = localStorage.getItem('llmPersona') || '';
@@ -2151,10 +2756,128 @@ function importConversation(event) {
       renderSidebar();
       renderMessages();
       updateTokenInfo();
-    } catch (err) { alert('Error importing: ' + err.message); }
+    } catch (err) { showToast('Error importing: ' + err.message, 'error'); }
   };
   reader.readAsText(file);
   event.target.value = '';
+}
+
+// ============================================
+// Export as Markdown
+// ============================================
+function exportMarkdown() {
+  const conv = getActiveConv();
+  if (!conv || conv.messages.length === 0) { showToast('No messages to export.', 'info'); return; }
+  let md = '# ' + conv.title + '\n\n';
+  conv.messages.forEach(m => {
+    if (m.role === 'user') {
+      md += '## User\n\n';
+      const text = getMsgText(m);
+      if (Array.isArray(m.content)) {
+        m.content.forEach(p => {
+          if (p.type === 'text') md += p.text + '\n\n';
+          else if (p.type === 'image_url') md += '_[Image attachment]_\n\n';
+        });
+      } else {
+        md += text + '\n\n';
+      }
+    } else if (m.role === 'assistant') {
+      md += '## Assistant\n\n' + (m.content || '') + '\n\n';
+    }
+  });
+  const blob = new Blob([md], { type: 'text/markdown' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = (conv.title || 'chat') + '.md';
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+// ============================================
+// Chat Search (Ctrl+F)
+// ============================================
+let chatSearchMatches = [];
+let chatSearchIdx = -1;
+let chatSearchDebounce = null;
+
+function openChatSearch() {
+  const bar = document.getElementById('chatSearchBar');
+  bar.classList.add('open');
+  document.getElementById('chatSearchInput').focus();
+}
+
+function closeChatSearch() {
+  const bar = document.getElementById('chatSearchBar');
+  bar.classList.remove('open');
+  document.getElementById('chatSearchInput').value = '';
+  document.getElementById('chatSearchCount').textContent = '';
+  clearChatHighlights();
+  chatSearchMatches = [];
+  chatSearchIdx = -1;
+}
+
+function clearChatHighlights() {
+  document.querySelectorAll('.search-highlight').forEach(el => {
+    const parent = el.parentNode;
+    parent.replaceChild(document.createTextNode(el.textContent), el);
+    parent.normalize();
+  });
+}
+
+function debouncedChatSearch() {
+  clearTimeout(chatSearchDebounce);
+  chatSearchDebounce = setTimeout(performChatSearch, 200);
+}
+
+function performChatSearch() {
+  clearChatHighlights();
+  chatSearchMatches = [];
+  chatSearchIdx = -1;
+  const query = document.getElementById('chatSearchInput').value.trim();
+  if (!query) { document.getElementById('chatSearchCount').textContent = ''; return; }
+
+  const area = document.getElementById('messagesArea');
+  const walker = document.createTreeWalker(area, NodeFilter.SHOW_TEXT, null, false);
+  const textNodes = [];
+  while (walker.nextNode()) textNodes.push(walker.currentNode);
+
+  const lowerQuery = query.toLowerCase();
+  textNodes.forEach(node => {
+    const text = node.textContent;
+    const lower = text.toLowerCase();
+    let idx = lower.indexOf(lowerQuery);
+    if (idx === -1) return;
+    const frag = document.createDocumentFragment();
+    let lastIdx = 0;
+    while (idx !== -1) {
+      if (idx > lastIdx) frag.appendChild(document.createTextNode(text.slice(lastIdx, idx)));
+      const span = document.createElement('span');
+      span.className = 'search-highlight';
+      span.textContent = text.slice(idx, idx + query.length);
+      frag.appendChild(span);
+      chatSearchMatches.push(span);
+      lastIdx = idx + query.length;
+      idx = lower.indexOf(lowerQuery, lastIdx);
+    }
+    if (lastIdx < text.length) frag.appendChild(document.createTextNode(text.slice(lastIdx)));
+    node.parentNode.replaceChild(frag, node);
+  });
+
+  document.getElementById('chatSearchCount').textContent = chatSearchMatches.length + ' matches';
+  if (chatSearchMatches.length > 0) {
+    chatSearchIdx = 0;
+    chatSearchMatches[0].classList.add('active');
+    chatSearchMatches[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+}
+
+function navigateChatSearch(dir) {
+  if (chatSearchMatches.length === 0) return;
+  chatSearchMatches[chatSearchIdx]?.classList.remove('active');
+  chatSearchIdx = (chatSearchIdx + dir + chatSearchMatches.length) % chatSearchMatches.length;
+  chatSearchMatches[chatSearchIdx].classList.add('active');
+  chatSearchMatches[chatSearchIdx].scrollIntoView({ behavior: 'smooth', block: 'center' });
+  document.getElementById('chatSearchCount').textContent = (chatSearchIdx + 1) + '/' + chatSearchMatches.length;
 }
 
 // ============================================
@@ -2187,6 +2910,97 @@ function renderPreviews() {
     thumb.appendChild(rm);
     container.appendChild(thumb);
   });
+}
+
+// ============================================
+// @Model Mentions
+// ============================================
+function clearModelOverride() {
+  modelOverride = null;
+  document.getElementById('modelOverrideBadge').classList.remove('visible');
+}
+
+function setModelOverride(model) {
+  modelOverride = model;
+  document.getElementById('modelOverrideText').textContent = model;
+  document.getElementById('modelOverrideBadge').classList.add('visible');
+  closeMentionDropdown();
+}
+
+function closeMentionDropdown() {
+  document.getElementById('mentionDropdown').classList.remove('open');
+  mentionActive = false;
+  mentionIdx = 0;
+}
+
+function handleMentionInput(ta) {
+  const val = ta.value;
+  const cursorPos = ta.selectionStart;
+  // Find @query before cursor
+  const before = val.slice(0, cursorPos);
+  const atMatch = before.match(/@([\w\-./]*)$/);
+  if (!atMatch) { closeMentionDropdown(); return; }
+
+  const query = atMatch[1].toLowerCase();
+  let models = [];
+  try { models = JSON.parse(localStorage.getItem('llmModelList') || '[]'); } catch(e) {}
+  if (models.length === 0) { closeMentionDropdown(); return; }
+
+  const filtered = models.filter(m => m.toLowerCase().includes(query)).slice(0, 8);
+  if (filtered.length === 0) { closeMentionDropdown(); return; }
+
+  const dropdown = document.getElementById('mentionDropdown');
+  dropdown.innerHTML = '';
+  mentionIdx = 0;
+  filtered.forEach((m, i) => {
+    const div = document.createElement('div');
+    div.className = 'mention-item' + (i === 0 ? ' active' : '');
+    div.textContent = m;
+    div.onclick = () => selectMention(ta, m, atMatch.index);
+    dropdown.appendChild(div);
+  });
+  dropdown.classList.add('open');
+  mentionActive = true;
+}
+
+function selectMention(ta, model, atStart) {
+  // Remove @query from input
+  const after = ta.value.slice(ta.selectionStart);
+  ta.value = ta.value.slice(0, atStart) + after;
+  ta.focus();
+  setModelOverride(model);
+}
+
+function handleMentionKeydown(e, ta) {
+  if (!mentionActive) return;
+  const dropdown = document.getElementById('mentionDropdown');
+  const items = dropdown.querySelectorAll('.mention-item');
+  if (items.length === 0) return;
+
+  if (e.key === 'ArrowDown') {
+    e.preventDefault();
+    items[mentionIdx]?.classList.remove('active');
+    mentionIdx = (mentionIdx + 1) % items.length;
+    items[mentionIdx]?.classList.add('active');
+    items[mentionIdx]?.scrollIntoView({ block: 'nearest' });
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault();
+    items[mentionIdx]?.classList.remove('active');
+    mentionIdx = (mentionIdx - 1 + items.length) % items.length;
+    items[mentionIdx]?.classList.add('active');
+    items[mentionIdx]?.scrollIntoView({ block: 'nearest' });
+  } else if (e.key === 'Enter' || e.key === 'Tab') {
+    e.preventDefault();
+    e.stopPropagation();
+    const model = items[mentionIdx]?.textContent;
+    if (model) {
+      const before = ta.value.slice(0, ta.selectionStart);
+      const atMatch = before.match(/@([\w\-./]*)$/);
+      if (atMatch) selectMention(ta, model, atMatch.index);
+    }
+  } else if (e.key === 'Escape') {
+    closeMentionDropdown();
+  }
 }
 
 // ============================================
