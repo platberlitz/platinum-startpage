@@ -549,6 +549,65 @@ body {
 @media (max-width: 768px) {
   .sidebar-overlay.open { display: block; }
 }
+
+/* Tool use blocks (web search) */
+.tool-use-block {
+  margin-bottom: 8px;
+  border-radius: 8px;
+  background: var(--hover);
+  overflow: hidden;
+  font-size: 0.85em;
+}
+.tool-use-header {
+  padding: 8px 12px;
+  cursor: pointer;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  user-select: none;
+}
+.tool-use-header:hover { color: var(--text-primary); }
+.tool-use-results {
+  display: none;
+  padding: 4px 12px 8px;
+  border-top: 1px solid var(--card-border);
+}
+.tool-use-results.open { display: block; }
+.tool-use-result { margin: 4px 0; }
+.tool-use-result a {
+  color: var(--accent);
+  text-decoration: none;
+  font-size: 0.85em;
+}
+.tool-use-result a:hover { text-decoration: underline; }
+.tool-use-result .tool-result-url {
+  color: var(--text-secondary);
+  font-size: 0.8em;
+  display: block;
+}
+
+/* Settings toggle row */
+.toggle-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9em;
+  color: var(--text-primary);
+  margin-bottom: 10px;
+  cursor: pointer;
+}
+.toggle-row input[type="checkbox"] {
+  width: auto;
+  margin: 0;
+  padding: 0;
+  cursor: pointer;
+}
+.toggle-hint {
+  color: var(--text-secondary);
+  font-size: 0.8em;
+  margin-left: auto;
+}
 </style>
 </head>
 <body>
@@ -689,6 +748,12 @@ body {
     </div>
     <label>Font</label>
     <input type="text" id="setFont" placeholder="e.g. Inter, Poppins, JetBrains Mono">
+
+    <div class="modal-section">Tools</div>
+    <label class="toggle-row">
+      <input type="checkbox" id="setWebSearch"> Web Search
+      <span class="toggle-hint">Anthropic &amp; OpenAI</span>
+    </label>
 
     <div class="modal-section">Cost Tracking</div>
     <label>Input Cost per 1M tokens</label>
@@ -1355,6 +1420,7 @@ function openSettings() {
   document.getElementById('setInputCost').value = localStorage.getItem('llmInputCost') || '';
   document.getElementById('setOutputCost').value = localStorage.getItem('llmOutputCost') || '';
   document.getElementById('setFont').value = localStorage.getItem('assistantFont') || '';
+  document.getElementById('setWebSearch').checked = localStorage.getItem('llmWebSearch') === 'true';
 
   // Theme
   const currentTheme = localStorage.getItem('assistantTheme') || 'dark';
@@ -1403,6 +1469,7 @@ function saveSettings() {
   localStorage.setItem('llmExcludeParams', document.getElementById('setExcludeParams').value.trim());
   localStorage.setItem('llmInputCost', document.getElementById('setInputCost').value.trim());
   localStorage.setItem('llmOutputCost', document.getElementById('setOutputCost').value.trim());
+  localStorage.setItem('llmWebSearch', document.getElementById('setWebSearch').checked ? 'true' : 'false');
 
   // Theme
   const themeName = document.getElementById('setTheme').value;
@@ -1475,7 +1542,8 @@ function renderMessages() {
         bubble.textContent = msg.content;
       }
     } else if (msg.role === 'assistant') {
-      bubble.innerHTML = renderMarkdown(msg.content);
+      const toolData = msg.swipeToolUse && msg.swipeToolUse[msg.swipeIndex];
+      bubble.innerHTML = renderToolBlocksHTML(toolData || []) + renderMarkdown(msg.content);
       addCodeCopyButtons(bubble);
     } else {
       bubble.textContent = msg.content;
@@ -1632,6 +1700,39 @@ function swipeMsg(idx, dir) {
 }
 
 // ============================================
+// Tool Use Rendering
+// ============================================
+function renderToolBlocksHTML(toolBlocks) {
+  if (!toolBlocks || toolBlocks.length === 0) return '';
+  return toolBlocks.map((tb, i) => {
+    const query = tb.query || '';
+    const results = tb.results || [];
+    const searching = tb.searching;
+    if (searching) {
+      return '<div class="tool-use-block"><div class="tool-use-header">\u{1F50D} Searching\u2026</div></div>';
+    }
+    const count = results.length;
+    const resultsHTML = results.map(r => {
+      const title = r.title || r.url || 'Result';
+      const url = r.url || '#';
+      const displayUrl = url.replace(/^https?:\/\//, '').replace(/\/+$/, '');
+      return '<div class="tool-use-result"><a href="' + url.replace(/"/g, '&quot;') + '" target="_blank" rel="noopener">' +
+        title.replace(/&/g, '&amp;').replace(/</g, '&lt;') + '</a>' +
+        '<span class="tool-result-url">' + displayUrl.replace(/&/g, '&amp;').replace(/</g, '&lt;') + '</span></div>';
+    }).join('');
+    // OpenAI-style: no query, just sources
+    const headerText = tb.isOpenAI
+      ? '\u{1F50D} Web Search \u00B7 ' + count + ' source' + (count !== 1 ? 's' : '')
+      : '\u{1F50D} Searched "' + query.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;') + '" \u00B7 ' + count + ' result' + (count !== 1 ? 's' : '');
+    return '<div class="tool-use-block">' +
+      '<div class="tool-use-header" onclick="this.nextElementSibling.classList.toggle(\'open\');this.querySelector(\'.tool-use-arrow\').textContent=this.nextElementSibling.classList.contains(\'open\')?\'\u25BE\':\'\u25B8\'">' +
+      headerText +
+      ' <span class="tool-use-arrow">\u25B8</span></div>' +
+      '<div class="tool-use-results">' + resultsHTML + '</div></div>';
+  }).join('');
+}
+
+// ============================================
 // Streaming
 // ============================================
 async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl) {
@@ -1654,6 +1755,10 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl) {
 
   let fullText = '';
   let lastRender = 0;
+  let toolBlocks = [];
+  let currentBlockType = null;
+  let inputJsonBuf = '';
+  let openaiAnnotations = [];
 
   try {
     let url, headers, body;
@@ -1667,6 +1772,9 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl) {
       };
       const prepared = prepareAnthropicMessages(apiMessages);
       body = { model, system: prepared.system, messages: prepared.messages, max_tokens: 4096, stream: true, ...extra };
+      if (localStorage.getItem('llmWebSearch') === 'true') {
+        body.tools = (body.tools || []).concat([{ type: 'web_search_20250305', name: 'web_search', max_uses: 5 }]);
+      }
     } else {
       url = baseUrl + '/chat/completions';
       headers = {
@@ -1674,6 +1782,9 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl) {
         'Authorization': 'Bearer ' + apiKey
       };
       body = { model, messages: apiMessages, stream: true, ...extra };
+      if (localStorage.getItem('llmWebSearch') === 'true') {
+        body.web_search_options = body.web_search_options || {};
+      }
     }
     exclude.forEach(k => delete body[k]);
 
@@ -1696,12 +1807,40 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl) {
       const data = await resp.json();
       if (format === 'anthropic') {
         fullText = (data.content || []).filter(c => c.type === 'text').map(c => c.text).join('') || 'No response.';
+        // Extract tool blocks from non-streaming response
+        for (const block of (data.content || [])) {
+          if (block.type === 'server_tool_use' && block.name === 'web_search') {
+            toolBlocks.push({ query: block.input?.query || '', results: [], searching: false });
+          } else if (block.type === 'web_search_tool_result') {
+            const tb = toolBlocks[toolBlocks.length - 1] || { query: '', results: [], searching: false };
+            if (!toolBlocks.length) toolBlocks.push(tb);
+            tb.results = (block.content || []).filter(r => r.type === 'web_search_result').map(r => ({ title: r.title, url: r.url }));
+            tb.searching = false;
+          }
+        }
       } else {
         fullText = data.choices?.[0]?.message?.content || 'No response.';
+        // Extract OpenAI web search annotations
+        const annotations = data.choices?.[0]?.message?.annotations;
+        if (annotations && annotations.length > 0) {
+          const sources = annotations.filter(a => a.type === 'url_citation').map(a => ({
+            title: a.url_citation?.title || a.title || '',
+            url: a.url_citation?.url || a.url || ''
+          }));
+          if (sources.length > 0) {
+            const seen = new Set();
+            const unique = sources.filter(s => { if (seen.has(s.url)) return false; seen.add(s.url); return true; });
+            toolBlocks.push({ query: '', results: unique, searching: false, isOpenAI: true });
+          }
+        }
       }
       assistantMsg.swipes[swipeIdx] = fullText;
       assistantMsg.content = fullText;
-      bubbleEl.innerHTML = renderMarkdown(fullText);
+      if (toolBlocks.length > 0) {
+        assistantMsg.swipeToolUse = assistantMsg.swipeToolUse || [];
+        assistantMsg.swipeToolUse[swipeIdx] = toolBlocks;
+      }
+      bubbleEl.innerHTML = renderToolBlocksHTML(toolBlocks) + renderMarkdown(fullText);
       addCodeCopyButtons(bubbleEl);
     } else {
       // SSE streaming
@@ -1725,8 +1864,38 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl) {
             if (!payload) continue;
             try {
               const json = JSON.parse(payload);
-              if (json.type === 'content_block_delta' && json.delta?.text) {
-                fullText += json.delta.text;
+              if (json.type === 'content_block_start') {
+                const cb = json.content_block;
+                if (cb && cb.type === 'server_tool_use') {
+                  currentBlockType = 'server_tool_use';
+                  inputJsonBuf = '';
+                  toolBlocks.push({ query: '', results: [], searching: true });
+                } else if (cb && cb.type === 'web_search_tool_result') {
+                  currentBlockType = 'web_search_tool_result';
+                  const tb = toolBlocks[toolBlocks.length - 1];
+                  if (tb) {
+                    tb.results = (cb.content || []).filter(r => r.type === 'web_search_result').map(r => ({ title: r.title, url: r.url }));
+                    tb.searching = false;
+                  }
+                } else if (cb && cb.type === 'text') {
+                  currentBlockType = 'text';
+                }
+              } else if (json.type === 'content_block_delta') {
+                if (json.delta?.type === 'text_delta' && json.delta?.text) {
+                  fullText += json.delta.text;
+                } else if (json.delta?.type === 'input_json_delta' && json.delta?.partial_json) {
+                  inputJsonBuf += json.delta.partial_json;
+                }
+              } else if (json.type === 'content_block_stop') {
+                if (currentBlockType === 'server_tool_use' && inputJsonBuf) {
+                  try {
+                    const parsed = JSON.parse(inputJsonBuf);
+                    const tb = toolBlocks[toolBlocks.length - 1];
+                    if (tb && parsed.query) tb.query = parsed.query;
+                  } catch(e) {}
+                  inputJsonBuf = '';
+                }
+                currentBlockType = null;
               } else if (json.type === 'message_stop') {
                 // done
               } else if (json.type === 'error') {
@@ -1742,6 +1911,18 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl) {
               const json = JSON.parse(payload);
               const delta = json.choices?.[0]?.delta?.content;
               if (delta) fullText += delta;
+              // Capture annotations from streaming chunks (OpenAI search models)
+              const chunkAnnotations = json.choices?.[0]?.delta?.annotations;
+              if (chunkAnnotations && chunkAnnotations.length > 0) {
+                for (const a of chunkAnnotations) {
+                  if (a.type === 'url_citation') {
+                    openaiAnnotations.push({
+                      title: a.url_citation?.title || a.title || '',
+                      url: a.url_citation?.url || a.url || ''
+                    });
+                  }
+                }
+              }
             } catch(e) {}
           }
         }
@@ -1750,12 +1931,22 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl) {
         assistantMsg.content = fullText;
         const now = Date.now();
         if (now - lastRender > 80) {
-          bubbleEl.innerHTML = renderMarkdown(fullText);
+          bubbleEl.innerHTML = renderToolBlocksHTML(toolBlocks) + renderMarkdown(fullText);
           document.getElementById('messagesArea').scrollTop = document.getElementById('messagesArea').scrollHeight;
           lastRender = now;
         }
       }
-      bubbleEl.innerHTML = renderMarkdown(fullText);
+      // Convert accumulated OpenAI annotations to tool block
+      if (openaiAnnotations.length > 0) {
+        const seen = new Set();
+        const unique = openaiAnnotations.filter(s => { if (seen.has(s.url)) return false; seen.add(s.url); return true; });
+        toolBlocks.push({ query: '', results: unique, searching: false, isOpenAI: true });
+      }
+      if (toolBlocks.length > 0) {
+        assistantMsg.swipeToolUse = assistantMsg.swipeToolUse || [];
+        assistantMsg.swipeToolUse[swipeIdx] = toolBlocks;
+      }
+      bubbleEl.innerHTML = renderToolBlocksHTML(toolBlocks) + renderMarkdown(fullText);
       addCodeCopyButtons(bubbleEl);
     }
   } catch (e) {
@@ -1766,7 +1957,11 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl) {
     }
     assistantMsg.swipes[swipeIdx] = fullText;
     assistantMsg.content = fullText;
-    bubbleEl.innerHTML = renderMarkdown(fullText);
+    if (toolBlocks.length > 0) {
+      assistantMsg.swipeToolUse = assistantMsg.swipeToolUse || [];
+      assistantMsg.swipeToolUse[swipeIdx] = toolBlocks;
+    }
+    bubbleEl.innerHTML = renderToolBlocksHTML(toolBlocks) + renderMarkdown(fullText);
   } finally {
     streaming = false;
     abortController = null;
