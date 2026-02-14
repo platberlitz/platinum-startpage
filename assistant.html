@@ -715,6 +715,11 @@ body {
     <textarea id="setPersona" placeholder="Describe yourself so the AI can personalize responses..."></textarea>
 
     <div class="modal-section">Request Parameters</div>
+    <label class="toggle-row">
+      <input type="checkbox" id="setStreaming" checked> Streaming
+    </label>
+    <label>Temperature</label>
+    <input type="number" id="setTemperature" step="0.1" min="0" max="2" placeholder="e.g. 0.7 (leave empty for default)">
     <label>Extra Parameters (JSON)</label>
     <textarea id="setExtraParams" placeholder='{"temperature": 0.7, "max_tokens": 4096}'></textarea>
     <label>Exclude Parameters (comma-separated)</label>
@@ -752,7 +757,7 @@ body {
     <div class="modal-section">Tools</div>
     <label class="toggle-row">
       <input type="checkbox" id="setWebSearch"> Web Search
-      <span class="toggle-hint">Anthropic &amp; OpenAI</span>
+      <span class="toggle-hint">Anthropic only</span>
     </label>
 
     <div class="modal-section">Cost Tracking</div>
@@ -1417,6 +1422,8 @@ function openSettings() {
   document.getElementById('setPersona').value = localStorage.getItem('llmPersona') || '';
   document.getElementById('setExtraParams').value = localStorage.getItem('llmExtraParams') || '';
   document.getElementById('setExcludeParams').value = localStorage.getItem('llmExcludeParams') || '';
+  document.getElementById('setStreaming').checked = localStorage.getItem('llmStreaming') !== 'false';
+  document.getElementById('setTemperature').value = localStorage.getItem('llmTemperature') || '';
   document.getElementById('setInputCost').value = localStorage.getItem('llmInputCost') || '';
   document.getElementById('setOutputCost').value = localStorage.getItem('llmOutputCost') || '';
   document.getElementById('setFont').value = localStorage.getItem('assistantFont') || '';
@@ -1467,6 +1474,9 @@ function saveSettings() {
   localStorage.setItem('llmPersona', document.getElementById('setPersona').value.trim());
   localStorage.setItem('llmExtraParams', extraParamsVal);
   localStorage.setItem('llmExcludeParams', document.getElementById('setExcludeParams').value.trim());
+  localStorage.setItem('llmStreaming', document.getElementById('setStreaming').checked ? 'true' : 'false');
+  const tempVal = document.getElementById('setTemperature').value.trim();
+  localStorage.setItem('llmTemperature', tempVal);
   localStorage.setItem('llmInputCost', document.getElementById('setInputCost').value.trim());
   localStorage.setItem('llmOutputCost', document.getElementById('setOutputCost').value.trim());
   localStorage.setItem('llmWebSearch', document.getElementById('setWebSearch').checked ? 'true' : 'false');
@@ -1720,10 +1730,7 @@ function renderToolBlocksHTML(toolBlocks) {
         title.replace(/&/g, '&amp;').replace(/</g, '&lt;') + '</a>' +
         '<span class="tool-result-url">' + displayUrl.replace(/&/g, '&amp;').replace(/</g, '&lt;') + '</span></div>';
     }).join('');
-    // OpenAI-style: no query, just sources
-    const headerText = tb.isOpenAI
-      ? '\u{1F50D} Web Search \u00B7 ' + count + ' source' + (count !== 1 ? 's' : '')
-      : '\u{1F50D} Searched "' + query.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;') + '" \u00B7 ' + count + ' result' + (count !== 1 ? 's' : '');
+    const headerText = '\u{1F50D} Searched "' + query.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;') + '" \u00B7 ' + count + ' result' + (count !== 1 ? 's' : '');
     return '<div class="tool-use-block">' +
       '<div class="tool-use-header" onclick="this.nextElementSibling.classList.toggle(\'open\');this.querySelector(\'.tool-use-arrow\').textContent=this.nextElementSibling.classList.contains(\'open\')?\'\u25BE\':\'\u25B8\'">' +
       headerText +
@@ -1758,10 +1765,10 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl) {
   let toolBlocks = [];
   let currentBlockType = null;
   let inputJsonBuf = '';
-  let openaiAnnotations = [];
 
   try {
     let url, headers, body;
+    const useStream = localStorage.getItem('llmStreaming') !== 'false';
 
     if (format === 'anthropic') {
       url = baseUrl + '/messages';
@@ -1771,7 +1778,7 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl) {
         'anthropic-version': '2023-06-01'
       };
       const prepared = prepareAnthropicMessages(apiMessages);
-      body = { model, system: prepared.system, messages: prepared.messages, max_tokens: 4096, stream: true, ...extra };
+      body = { model, system: prepared.system, messages: prepared.messages, max_tokens: 4096, stream: useStream, ...extra };
       if (localStorage.getItem('llmWebSearch') === 'true') {
         body.tools = (body.tools || []).concat([{ type: 'web_search_20250305', name: 'web_search', max_uses: 5 }]);
       }
@@ -1781,10 +1788,11 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl) {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer ' + apiKey
       };
-      body = { model, messages: apiMessages, stream: true, ...extra };
-      if (localStorage.getItem('llmWebSearch') === 'true') {
-        body.web_search_options = body.web_search_options || {};
-      }
+      body = { model, messages: apiMessages, stream: useStream, ...extra };
+    }
+    if (!('temperature' in body)) {
+      const temp = parseFloat(localStorage.getItem('llmTemperature'));
+      if (!isNaN(temp)) body.temperature = temp;
     }
     exclude.forEach(k => delete body[k]);
 
@@ -1820,19 +1828,6 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl) {
         }
       } else {
         fullText = data.choices?.[0]?.message?.content || 'No response.';
-        // Extract OpenAI web search annotations
-        const annotations = data.choices?.[0]?.message?.annotations;
-        if (annotations && annotations.length > 0) {
-          const sources = annotations.filter(a => a.type === 'url_citation').map(a => ({
-            title: a.url_citation?.title || a.title || '',
-            url: a.url_citation?.url || a.url || ''
-          }));
-          if (sources.length > 0) {
-            const seen = new Set();
-            const unique = sources.filter(s => { if (seen.has(s.url)) return false; seen.add(s.url); return true; });
-            toolBlocks.push({ query: '', results: unique, searching: false, isOpenAI: true });
-          }
-        }
       }
       assistantMsg.swipes[swipeIdx] = fullText;
       assistantMsg.content = fullText;
@@ -1911,18 +1906,6 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl) {
               const json = JSON.parse(payload);
               const delta = json.choices?.[0]?.delta?.content;
               if (delta) fullText += delta;
-              // Capture annotations from streaming chunks (OpenAI search models)
-              const chunkAnnotations = json.choices?.[0]?.delta?.annotations;
-              if (chunkAnnotations && chunkAnnotations.length > 0) {
-                for (const a of chunkAnnotations) {
-                  if (a.type === 'url_citation') {
-                    openaiAnnotations.push({
-                      title: a.url_citation?.title || a.title || '',
-                      url: a.url_citation?.url || a.url || ''
-                    });
-                  }
-                }
-              }
             } catch(e) {}
           }
         }
@@ -1935,12 +1918,6 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl) {
           document.getElementById('messagesArea').scrollTop = document.getElementById('messagesArea').scrollHeight;
           lastRender = now;
         }
-      }
-      // Convert accumulated OpenAI annotations to tool block
-      if (openaiAnnotations.length > 0) {
-        const seen = new Set();
-        const unique = openaiAnnotations.filter(s => { if (seen.has(s.url)) return false; seen.add(s.url); return true; });
-        toolBlocks.push({ query: '', results: unique, searching: false, isOpenAI: true });
       }
       if (toolBlocks.length > 0) {
         assistantMsg.swipeToolUse = assistantMsg.swipeToolUse || [];
