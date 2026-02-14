@@ -1118,6 +1118,11 @@ pre.has-line-numbers { counter-reset: code-line; }
       <input type="checkbox" id="setWebSearch"> Web Search
       <span class="toggle-hint">Anthropic only</span>
     </label>
+    <label class="toggle-row">
+      <input type="checkbox" id="setMemory"> Memory
+      <span class="toggle-hint">Remember info across chats</span>
+    </label>
+    <button class="btn btn-secondary" style="width:100%;padding:8px;font-size:0.8em;margin-bottom:14px" onclick="openManageMemories()">Manage Memories</button>
 
     <div class="modal-section">Cost Tracking</div>
     <label>Input Cost per 1M tokens</label>
@@ -1404,6 +1409,126 @@ function loadCachedModels(target) {
     const cached = JSON.parse(localStorage.getItem('llmModelList') || '[]');
     if (cached.length > 0) populateModelSelect(target, cached);
   } catch(e) {}
+}
+
+// ============================================
+// Memory System
+// ============================================
+function loadMemories() {
+  try { return JSON.parse(localStorage.getItem('assistantMemories') || '[]'); } catch(e) { return []; }
+}
+function saveMemories(memories) {
+  localStorage.setItem('assistantMemories', JSON.stringify(memories));
+}
+function getMemoryPrompt() {
+  if (localStorage.getItem('llmMemoryEnabled') !== 'true') return '';
+  const memories = loadMemories();
+  if (memories.length === 0) return '';
+  return 'User memories (facts learned from previous conversations):\n' +
+    memories.map(m => '- ' + m.text).join('\n');
+}
+
+async function callApiNonStreaming(messages) {
+  const baseUrl = (localStorage.getItem('llmProxyUrl') || '').replace(/\/+$/, '');
+  const apiKey = localStorage.getItem('llmApiKey');
+  const model = localStorage.getItem('llmModel') || 'gpt-4o';
+  const format = detectApiFormat(model);
+
+  let url, headers, body;
+  if (format === 'anthropic') {
+    url = baseUrl + '/messages';
+    headers = { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' };
+    const prepared = prepareAnthropicMessages(messages);
+    body = { model, system: prepared.system, messages: prepared.messages, max_tokens: 512, stream: false };
+  } else {
+    url = baseUrl + '/chat/completions';
+    headers = { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + apiKey };
+    body = { model, messages, stream: false, max_tokens: 512 };
+  }
+
+  const resp = await fetch(url, { method: 'POST', headers, body: JSON.stringify(body) });
+  if (!resp.ok) throw new Error('HTTP ' + resp.status);
+  const data = await resp.json();
+
+  if (format === 'anthropic') {
+    return (data.content || []).filter(c => c.type === 'text').map(c => c.text).join('');
+  }
+  return data.choices?.[0]?.message?.content || '';
+}
+
+async function extractMemories(conversationMessages) {
+  if (localStorage.getItem('llmMemoryEnabled') !== 'true') return;
+
+  const existing = loadMemories();
+  const existingText = existing.map(m => '- ' + m.text).join('\n') || '(none yet)';
+
+  const extractPrompt = [
+    { role: 'system', content: `You are a memory extraction system. Given a conversation, identify important facts about the user worth remembering for future conversations (preferences, personal details, projects, interests, opinions).
+
+Current memories:
+${existingText}
+
+Respond ONLY with a JSON array of new memory strings to add. If there's nothing new worth remembering, respond with []. Do not repeat existing memories. Keep each memory concise (1 sentence). Maximum 3 new memories per extraction.
+
+Example response: ["User prefers TypeScript over JavaScript", "User is building a music app"]` },
+    ...conversationMessages.filter(m => m.role !== 'system').slice(-10)
+  ];
+
+  try {
+    const response = await callApiNonStreaming(extractPrompt);
+    const newMemories = JSON.parse(response);
+    if (Array.isArray(newMemories) && newMemories.length > 0) {
+      const memories = loadMemories();
+      newMemories.forEach(text => {
+        if (typeof text === 'string' && text.trim()) {
+          memories.push({ id: 'mem_' + Date.now() + '_' + Math.random().toString(36).slice(2,5), text: text.trim(), createdAt: Date.now() });
+        }
+      });
+      while (memories.length > 50) memories.shift();
+      saveMemories(memories);
+    }
+  } catch(e) { /* silent fail — memory is best-effort */ }
+}
+
+function openManageMemories() {
+  document.querySelectorAll('.char-info-overlay,.char-info-popup').forEach(el => el.remove());
+
+  const overlay = document.createElement('div');
+  overlay.className = 'char-info-overlay';
+
+  const popup = document.createElement('div');
+  popup.className = 'char-info-popup';
+
+  function renderMemoryList() {
+    const memories = loadMemories();
+    let html = '<h3>Memories (' + memories.length + ')</h3>';
+    if (memories.length === 0) {
+      html += '<div style="color:var(--text-secondary);font-size:0.85em;margin-bottom:12px">No memories saved yet. The AI will automatically remember facts about you as you chat.</div>';
+    } else {
+      html += '<div style="display:flex;flex-direction:column;gap:6px;margin-bottom:12px">';
+      memories.forEach(m => {
+        html += '<div style="display:flex;align-items:center;gap:8px;font-size:0.85em;background:var(--hover);padding:8px 10px;border-radius:8px">' +
+          '<span style="flex:1;color:var(--text-secondary)">' + m.text.replace(/&/g, '&amp;').replace(/</g, '&lt;') + '</span>' +
+          '<button onclick="deleteMemory(\'' + m.id + '\')" style="background:none;border:none;color:var(--text-secondary);cursor:pointer;font-size:14px;flex-shrink:0;padding:2px 4px" title="Delete">✕</button>' +
+          '</div>';
+      });
+      html += '</div>';
+      html += '<button class="btn btn-secondary" style="width:100%;margin-bottom:8px;padding:8px;font-size:0.8em" onclick="if(confirm(\'Clear all memories?\')){saveMemories([]);openManageMemories()}">Clear All</button>';
+    }
+    html += '<button class="btn btn-primary" style="width:100%;padding:8px" onclick="this.closest(\'.char-info-popup\').previousElementSibling.click()">Close</button>';
+    popup.innerHTML = html;
+  }
+
+  overlay.onclick = () => { overlay.remove(); popup.remove(); };
+  renderMemoryList();
+  document.body.appendChild(overlay);
+  document.body.appendChild(popup);
+}
+
+function deleteMemory(id) {
+  const memories = loadMemories().filter(m => m.id !== id);
+  saveMemories(memories);
+  openManageMemories();
 }
 
 // ============================================
@@ -2093,6 +2218,7 @@ function openSettings() {
   document.getElementById('setOutputCost').value = localStorage.getItem('llmOutputCost') || '';
   document.getElementById('setFont').value = localStorage.getItem('assistantFont') || '';
   document.getElementById('setWebSearch').checked = localStorage.getItem('llmWebSearch') === 'true';
+  document.getElementById('setMemory').checked = localStorage.getItem('llmMemoryEnabled') === 'true';
 
   // Presets
   loadPresets();
@@ -2149,6 +2275,7 @@ function saveSettings() {
   localStorage.setItem('llmInputCost', document.getElementById('setInputCost').value.trim());
   localStorage.setItem('llmOutputCost', document.getElementById('setOutputCost').value.trim());
   localStorage.setItem('llmWebSearch', document.getElementById('setWebSearch').checked ? 'true' : 'false');
+  localStorage.setItem('llmMemoryEnabled', document.getElementById('setMemory').checked ? 'true' : 'false');
 
   // Theme
   const themeName = document.getElementById('setTheme').value;
@@ -2466,10 +2593,13 @@ async function resendAfterEdit() {
 
   const apiMessages = [{ role: 'system', content: systemPrompt }];
   if (persona) apiMessages.push({ role: 'system', content: 'About the user: ' + persona });
+  const _mem1 = getMemoryPrompt();
+  if (_mem1) apiMessages.push({ role: 'system', content: _mem1 });
   messages.forEach(m => { if (m.role !== 'system') apiMessages.push({ role: m.role, content: m.content }); });
 
   await streamResponse(apiMessages, assistantMsg, 0, bubble);
 
+  extractMemories(apiMessages);
   if (conv) conv.updatedAt = Date.now();
   saveConversations();
   renderMessages();
@@ -2882,6 +3012,8 @@ async function sendMessage() {
 
   const apiMessages = [{ role: 'system', content: systemPrompt }];
   if (persona) apiMessages.push({ role: 'system', content: 'About the user: ' + persona });
+  const _mem2 = getMemoryPrompt();
+  if (_mem2) apiMessages.push({ role: 'system', content: _mem2 });
   messages.forEach(m => { if (m.role !== 'system') apiMessages.push({ role: m.role, content: m.content }); });
 
   // Capture and clear model override
@@ -2890,6 +3022,7 @@ async function sendMessage() {
 
   await streamResponse(apiMessages, assistantMsg, 0, bubble, overrideModel);
 
+  extractMemories(apiMessages);
   if (messages.length > 50) messages.splice(0, messages.length - 50);
   if (conv) conv.updatedAt = Date.now();
   saveConversations();
@@ -2926,6 +3059,8 @@ async function regenerate() {
   const persona = localStorage.getItem('llmPersona') || '';
   const apiMessages = [{ role: 'system', content: systemPrompt }];
   if (persona) apiMessages.push({ role: 'system', content: 'About the user: ' + persona });
+  const _mem3 = getMemoryPrompt();
+  if (_mem3) apiMessages.push({ role: 'system', content: _mem3 });
   for (let i = 0; i < lastIdx; i++) {
     if (messages[i].role !== 'system') apiMessages.push({ role: messages[i].role, content: messages[i].content });
   }
