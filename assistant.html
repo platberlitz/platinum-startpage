@@ -1063,6 +1063,8 @@ pre.has-line-numbers { counter-reset: code-line; }
       </select>
       <button class="model-refresh-btn" onclick="saveCurrentAsPreset()" title="Save as preset">&#128190;</button>
       <button class="model-refresh-btn" onclick="deleteSelectedPreset()" title="Delete preset">&#128465;</button>
+      <button class="model-refresh-btn" onclick="document.getElementById('presetImport').click()" title="Import SillyTavern preset">&#8613;</button>
+      <input type="file" id="presetImport" accept=".json" style="display:none" onchange="importSTPreset(event)">
     </div>
     <label>System Prompt</label>
     <textarea id="setSystemPrompt" placeholder="You are a helpful assistant." rows="3"></textarea>
@@ -2364,6 +2366,71 @@ function deleteSelectedPreset() {
   localStorage.setItem('assistantPresets', JSON.stringify(presets));
   loadPresets();
   showToast('Preset deleted.', 'info');
+}
+
+function importSTPreset(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const data = JSON.parse(e.target.result);
+      let name = '', systemPrompt = '', persona = '';
+
+      if (data.content !== undefined && data.name) {
+        name = data.name;
+        systemPrompt = data.content || '';
+        if (data.post_history) systemPrompt += '\n\n' + data.post_history;
+      } else if (data.input_sequence && data.output_sequence && data.name) {
+        name = data.name;
+        systemPrompt = data.system_prompt || '';
+        if (!systemPrompt) { showToast('Instruct preset has no system prompt.', 'error'); return; }
+      } else if (data.data && data.data.description) {
+        const d = data.data;
+        name = d.name || data.name || file.name.replace('.json', '');
+        const parts = [];
+        if (d.system_prompt) parts.push(d.system_prompt);
+        if (d.description) parts.push(d.description);
+        if (d.personality) parts.push('Personality: ' + d.personality);
+        if (d.scenario) parts.push('Scenario: ' + d.scenario);
+        systemPrompt = parts.join('\n\n');
+      } else if (data.description) {
+        name = data.name || data.char_name || file.name.replace('.json', '');
+        const parts = [];
+        if (data.system_prompt) parts.push(data.system_prompt);
+        if (data.description) parts.push(data.description);
+        if (data.personality) parts.push('Personality: ' + data.personality);
+        if (data.scenario) parts.push('Scenario: ' + data.scenario);
+        systemPrompt = parts.join('\n\n');
+      } else {
+        showToast('Unrecognized preset format.', 'error');
+        return;
+      }
+
+      systemPrompt = systemPrompt
+        .replace(/\{\{char\}\}/gi, 'Assistant')
+        .replace(/\{\{user\}\}/gi, 'User');
+
+      let presets = [];
+      try { presets = JSON.parse(localStorage.getItem('assistantPresets') || '[]'); } catch(e) {}
+      const preset = {
+        id: 'preset_' + Date.now(),
+        name: name,
+        systemPrompt: systemPrompt.trim(),
+        persona: persona
+      };
+      presets.push(preset);
+      localStorage.setItem('assistantPresets', JSON.stringify(presets));
+      loadPresets();
+      document.getElementById('setPresetSelect').value = preset.id;
+      applyPreset(preset.id);
+      showToast('Imported: ' + name, 'success');
+    } catch(err) {
+      showToast('Failed to import: ' + err.message, 'error');
+    }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
 }
 
 // ============================================
