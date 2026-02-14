@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>AI Assistant</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -26,6 +26,7 @@
 body {
   font-family: 'Figtree', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   height: 100vh;
+  height: 100dvh;
   background: var(--bg);
   color: var(--text-primary);
   display: flex;
@@ -240,7 +241,7 @@ body {
 .msg-bubble table { border-collapse: collapse; margin: 6px 0; font-size: 0.95em; }
 .msg-bubble th, .msg-bubble td { border: 1px solid var(--card-border); padding: 4px 8px; }
 .msg-bubble th { background: var(--hover); }
-.msg-bubble img.chat-inline-img { max-width: 300px; max-height: 300px; border-radius: 8px; margin-top: 6px; display: block; }
+.msg-bubble img.chat-inline-img { max-width: min(300px, 100%); max-height: 300px; border-radius: 8px; margin-top: 6px; display: block; }
 
 /* Code copy button */
 .code-block-wrapper { position: relative; }
@@ -416,6 +417,7 @@ body {
   width: 90%;
   max-width: 520px;
   max-height: 90vh;
+  max-height: 90dvh;
   overflow-y: auto;
 }
 .modal h2 {
@@ -528,6 +530,12 @@ body {
 }
 .modal-section:first-of-type { margin-top: 0; }
 
+@media (hover: none) {
+  .msg-wrapper .msg-actions { display: flex; }
+  .code-block-wrapper .code-copy-btn { opacity: 1; }
+  .conv-item .conv-delete { display: block; }
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .sidebar { position: fixed; left: 0; top: 0; bottom: 0; z-index: 500; }
@@ -536,6 +544,19 @@ body {
   .toolbar-title { font-size: 0.85em; }
   .input-area { padding: 8px 12px 12px; }
   .messages-area { padding: 12px; }
+  .sidebar-overlay.open { display: block; }
+  .toolbar { padding-top: env(safe-area-inset-top); }
+  .input-area { padding-bottom: max(12px, env(safe-area-inset-bottom)); }
+  .sidebar { padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom); }
+  .toolbar-btn { padding: 10px; min-width: 44px; min-height: 44px; display: flex; align-items: center; justify-content: center; }
+  .toolbar-toggle { min-width: 44px; min-height: 44px; display: flex; align-items: center; justify-content: center; }
+  .input-btn { min-width: 44px; min-height: 44px; display: flex; align-items: center; justify-content: center; }
+  .img-thumb .remove-thumb { width: 28px; height: 28px; font-size: 14px; top: -4px; right: -4px; }
+  .msg-action-btn { padding: 8px 12px; font-size: 0.8em; min-height: 36px; }
+  .swipe-controls button { padding: 8px 14px; min-height: 36px; }
+  .regen-btn { padding: 10px 16px; min-height: 36px; }
+  .code-copy-btn { padding: 8px 12px; font-size: 0.8em; min-height: 36px; }
+  .conv-item .conv-delete { padding: 8px; min-width: 36px; min-height: 36px; display: flex; align-items: center; justify-content: center; }
 }
 
 /* Mobile sidebar overlay */
@@ -545,9 +566,6 @@ body {
   inset: 0;
   background: rgba(0,0,0,0.4);
   z-index: 499;
-}
-@media (max-width: 768px) {
-  .sidebar-overlay.open { display: block; }
 }
 
 /* Tool use blocks (web search) */
