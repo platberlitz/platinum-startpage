@@ -1609,6 +1609,8 @@ function renderMarkdown(text) {
     return '\x00MATH' + idx + '\x00';
   });
 
+  // Decode HTML entities that models sometimes output before escaping
+  s = s.replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'");
   s = s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   // Mermaid code blocks
   s = s.replace(/```mermaid\n([\s\S]*?)```/g, (_, code) =>
