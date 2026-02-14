@@ -75,11 +75,12 @@ body::before {
   display: grid;
   gap: 16px;
   grid-template-columns: 1fr 1fr 1fr;
-  grid-template-rows: auto auto 1fr auto;
+  grid-template-rows: auto auto auto 1fr auto;
   grid-template-areas:
     "search search search"
     "weather timezones links"
     "slideshow notes news"
+    "chat chat chat"
     "emoticon quote quote";
   height: calc(100vh - 20px);
 }
@@ -995,16 +996,145 @@ input[type="file"] {
   font-weight: 500;
 }
 
+/* Chat Card */
+.chat-card {
+  grid-area: chat;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 4px 0;
+  min-height: 0;
+}
+
+.chat-placeholder {
+  color: var(--text-secondary);
+  font-size: 0.8em;
+  text-align: center;
+  padding: 20px;
+}
+
+.chat-message {
+  max-width: 85%;
+  padding: 8px 12px;
+  border-radius: 10px;
+  font-size: 0.8em;
+  line-height: 1.5;
+  word-wrap: break-word;
+  white-space: pre-wrap;
+}
+
+.chat-message.user {
+  align-self: flex-end;
+  background: var(--accent);
+  color: white;
+  border-bottom-right-radius: 4px;
+}
+
+.chat-message.assistant {
+  align-self: flex-start;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-primary);
+  border-bottom-left-radius: 4px;
+}
+
+.chat-message.error {
+  align-self: center;
+  background: rgba(239, 68, 68, 0.2);
+  color: #fca5a5;
+  font-size: 0.75em;
+  border-radius: 6px;
+}
+
+.chat-loading {
+  align-self: flex-start;
+  color: var(--text-secondary);
+  font-size: 0.75em;
+  padding: 8px 12px;
+}
+
+.chat-loading::after {
+  content: '';
+  animation: chatDots 1.4s infinite;
+}
+
+@keyframes chatDots {
+  0%, 20% { content: '.'; }
+  40% { content: '..'; }
+  60%, 100% { content: '...'; }
+}
+
+.chat-input-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.chat-input {
+  flex: 1;
+  padding: 8px 12px;
+  font-size: 0.8em;
+  font-family: inherit;
+  background: rgba(255, 255, 255, 0.05);
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  color: var(--text-primary);
+  outline: none;
+  transition: all 0.3s ease;
+}
+
+.chat-input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.2);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.chat-input::placeholder {
+  color: var(--text-secondary);
+}
+
+.chat-send-btn {
+  padding: 8px 16px;
+  font-size: 0.75em;
+  font-family: inherit;
+  font-weight: 600;
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.chat-send-btn:hover {
+  background: var(--accent-hover);
+  transform: scale(1.02);
+}
+
+.chat-send-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
 /* Responsive */
 @media (max-width: 900px) {
   .grid {
     grid-template-columns: 1fr 1fr;
-    grid-template-rows: auto auto auto auto auto;
+    grid-template-rows: auto auto auto auto auto auto;
     grid-template-areas:
       "search search"
       "weather timezones"
       "links slideshow"
       "notes news"
+      "chat chat"
       "emoticon quote";
     height: auto;
   }
@@ -1013,7 +1143,7 @@ input[type="file"] {
 @media (max-width: 600px) {
   .grid {
     grid-template-columns: 1fr;
-    grid-template-rows: auto auto auto auto auto auto auto auto;
+    grid-template-rows: auto auto auto auto auto auto auto auto auto;
     grid-template-areas:
       "search"
       "weather"
@@ -1022,6 +1152,7 @@ input[type="file"] {
       "slideshow"
       "notes"
       "news"
+      "chat"
       "emoticon"
       "quote";
     height: auto;
@@ -1131,6 +1262,21 @@ input[type="file"] {
     <div class="card quote-card">
       <div class="quote-text" id="quoteText">Loading...</div>
     </div>
+
+    <!-- Chat Card -->
+    <div class="card chat-card">
+      <div class="card-header">
+        <span class="card-title">Ask AI</span>
+        <button class="add-btn" onclick="clearChat()">Clear</button>
+      </div>
+      <div class="chat-messages" id="chatMessages">
+        <div class="chat-placeholder">Ask me anything...</div>
+      </div>
+      <div class="chat-input-row">
+        <input type="text" class="chat-input" id="chatInput" placeholder="Type a question...">
+        <button class="chat-send-btn" id="chatSendBtn" onclick="sendChatMessage()">Send</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -1226,6 +1372,27 @@ input[type="file"] {
     <div class="section-title">Quotes</div>
     <button class="btn btn-block" onclick="openQuotesModal()">Manage Quotes</button>
     <p style="font-size:0.75em;color:var(--text-secondary);margin-top:8px">Add your own quotes, song lyrics, or phrases</p>
+  </div>
+
+  <div class="settings-section">
+    <div class="section-title">AI Chat</div>
+    <div style="margin-bottom:12px">
+      <label class="setting-label" style="display:block;margin-bottom:4px;font-size:0.85em">Proxy URL</label>
+      <input type="text" id="llmProxyUrl" placeholder="https://your-proxy.com/v1/chat/completions" style="width:100%;padding:12px;font-family:inherit;font-size:0.9em;background:rgba(255,255,255,0.05);border:1px solid var(--card-border);border-radius:8px;color:var(--text-primary);margin-bottom:0">
+    </div>
+    <div style="margin-bottom:12px">
+      <label class="setting-label" style="display:block;margin-bottom:4px;font-size:0.85em">API Key</label>
+      <input type="password" id="llmApiKey" placeholder="sk-..." style="width:100%;padding:12px;font-family:inherit;font-size:0.9em;background:rgba(255,255,255,0.05);border:1px solid var(--card-border);border-radius:8px;color:var(--text-primary);margin-bottom:0">
+    </div>
+    <div style="margin-bottom:12px">
+      <label class="setting-label" style="display:block;margin-bottom:4px;font-size:0.85em">Model</label>
+      <input type="text" id="llmModel" placeholder="gpt-4o" style="width:100%;padding:12px;font-family:inherit;font-size:0.9em;background:rgba(255,255,255,0.05);border:1px solid var(--card-border);border-radius:8px;color:var(--text-primary);margin-bottom:0">
+    </div>
+    <div style="margin-bottom:12px">
+      <label class="setting-label" style="display:block;margin-bottom:4px;font-size:0.85em">System Prompt (optional)</label>
+      <input type="text" id="llmSystemPrompt" placeholder="You are a helpful assistant." style="width:100%;padding:12px;font-family:inherit;font-size:0.9em;background:rgba(255,255,255,0.05);border:1px solid var(--card-border);border-radius:8px;color:var(--text-primary);margin-bottom:0">
+    </div>
+    <button class="btn btn-block" onclick="saveLLMSettings()">Save AI Settings</button>
   </div>
 
   <div class="settings-section">
@@ -1467,6 +1634,7 @@ function applyGridLayout(layout) {
     "search search search"
     "${layout.row2.join(' ')}"
     "${layout.row3.join(' ')}"
+    "chat chat chat"
     "emoticon quote quote"
   `;
   grid.style.gridTemplateAreas = areas;
@@ -1567,6 +1735,7 @@ let newsCache = {};
 let saveTimeout = null;
 let quickLinks = [];
 let editingLinks = [];
+let chatMessages = [];
 
 const emoticons = [':3', ':D', ':)', ':P', 'uwu', '^_^', 'o_o', ':>', '<3', '(:', '=^.^='];
 
@@ -1641,6 +1810,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   loadQuoteDisplay();
   loadQuickLinks();
   loadCalcHistory();
+  loadLLMSettings();
+  loadChatHistory();
   await loadSlideshowImages();
   await loadBackgroundImage();
   loadNews();
@@ -2240,6 +2411,12 @@ function exportSettings() {
     notes: document.getElementById('notesArea').value,
     quotes: JSON.parse(localStorage.getItem('userQuotes') || 'null'),
     calcHistory: JSON.parse(localStorage.getItem('calcHistory') || '[]'),
+    chatHistory: chatMessages,
+    llmSettings: {
+      proxyUrl: localStorage.getItem('llmProxyUrl') || '',
+      model: localStorage.getItem('llmModel') || '',
+      systemPrompt: localStorage.getItem('llmSystemPrompt') || ''
+    },
     settings: {
       bgBlur: localStorage.getItem('bgBlur'),
       cardOpacity: localStorage.getItem('cardOpacity'),
@@ -2291,6 +2468,19 @@ function importSettings(event) {
         calcHistory = data.calcHistory;
         saveCalcHistory();
         renderCalcHistory();
+      }
+
+      if (data.chatHistory) {
+        chatMessages = data.chatHistory;
+        localStorage.setItem('chatHistory', JSON.stringify(chatMessages));
+        renderChatMessages();
+      }
+
+      if (data.llmSettings) {
+        if (data.llmSettings.proxyUrl) localStorage.setItem('llmProxyUrl', data.llmSettings.proxyUrl);
+        if (data.llmSettings.model) localStorage.setItem('llmModel', data.llmSettings.model);
+        if (data.llmSettings.systemPrompt) localStorage.setItem('llmSystemPrompt', data.llmSettings.systemPrompt);
+        loadLLMSettings();
       }
 
       if (data.settings) {
@@ -2768,6 +2958,139 @@ document.getElementById('calcInput').addEventListener('keydown', (e) => {
       input.value = '';
       resultEl.textContent = '';
     }
+  }
+});
+
+// ============================================
+// AI Chat
+// ============================================
+function loadLLMSettings() {
+  document.getElementById('llmProxyUrl').value = localStorage.getItem('llmProxyUrl') || '';
+  document.getElementById('llmApiKey').value = localStorage.getItem('llmApiKey') || '';
+  document.getElementById('llmModel').value = localStorage.getItem('llmModel') || '';
+  document.getElementById('llmSystemPrompt').value = localStorage.getItem('llmSystemPrompt') || '';
+}
+
+function saveLLMSettings() {
+  localStorage.setItem('llmProxyUrl', document.getElementById('llmProxyUrl').value.trim());
+  localStorage.setItem('llmApiKey', document.getElementById('llmApiKey').value.trim());
+  localStorage.setItem('llmModel', document.getElementById('llmModel').value.trim());
+  localStorage.setItem('llmSystemPrompt', document.getElementById('llmSystemPrompt').value.trim());
+}
+
+function loadChatHistory() {
+  const saved = localStorage.getItem('chatHistory');
+  if (saved) {
+    chatMessages = JSON.parse(saved);
+    renderChatMessages();
+  }
+}
+
+function renderChatMessages() {
+  const container = document.getElementById('chatMessages');
+  container.innerHTML = '';
+
+  if (chatMessages.length === 0) {
+    container.innerHTML = '<div class="chat-placeholder">Ask me anything...</div>';
+    return;
+  }
+
+  chatMessages.forEach(msg => {
+    const div = document.createElement('div');
+    div.className = 'chat-message ' + msg.role;
+    div.textContent = msg.content;
+    container.appendChild(div);
+  });
+
+  container.scrollTop = container.scrollHeight;
+}
+
+async function sendChatMessage() {
+  const input = document.getElementById('chatInput');
+  const sendBtn = document.getElementById('chatSendBtn');
+  const text = input.value.trim();
+  if (!text) return;
+
+  const proxyUrl = localStorage.getItem('llmProxyUrl');
+  const apiKey = localStorage.getItem('llmApiKey');
+  const model = localStorage.getItem('llmModel') || 'gpt-4o';
+  const systemPrompt = localStorage.getItem('llmSystemPrompt') || 'You are a helpful assistant.';
+
+  if (!proxyUrl || !apiKey) {
+    const container = document.getElementById('chatMessages');
+    const errDiv = document.createElement('div');
+    errDiv.className = 'chat-message error';
+    errDiv.textContent = 'Configure Proxy URL and API Key in Settings first.';
+    container.appendChild(errDiv);
+    container.scrollTop = container.scrollHeight;
+    return;
+  }
+
+  // Add user message
+  chatMessages.push({ role: 'user', content: text });
+  input.value = '';
+  renderChatMessages();
+
+  // Show loading
+  const container = document.getElementById('chatMessages');
+  const loadingDiv = document.createElement('div');
+  loadingDiv.className = 'chat-loading';
+  loadingDiv.textContent = 'Thinking';
+  container.appendChild(loadingDiv);
+  container.scrollTop = container.scrollHeight;
+
+  sendBtn.disabled = true;
+
+  try {
+    const messages = [
+      { role: 'system', content: systemPrompt },
+      ...chatMessages
+    ];
+
+    const response = await fetch(proxyUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + apiKey
+      },
+      body: JSON.stringify({ model, messages })
+    });
+
+    if (!response.ok) {
+      throw new Error('API returned ' + response.status);
+    }
+
+    const data = await response.json();
+    const reply = data.choices && data.choices[0] && data.choices[0].message
+      ? data.choices[0].message.content
+      : 'No response received.';
+
+    chatMessages.push({ role: 'assistant', content: reply });
+  } catch (e) {
+    chatMessages.push({ role: 'assistant', content: 'Error: ' + e.message });
+  }
+
+  // Keep last 50 messages
+  if (chatMessages.length > 50) {
+    chatMessages = chatMessages.slice(-50);
+  }
+
+  localStorage.setItem('chatHistory', JSON.stringify(chatMessages));
+  sendBtn.disabled = false;
+  renderChatMessages();
+}
+
+function clearChat() {
+  chatMessages = [];
+  localStorage.removeItem('chatHistory');
+  renderChatMessages();
+}
+
+// Enter key sends chat message
+document.getElementById('chatInput').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    sendChatMessage();
   }
 });
 </script>
