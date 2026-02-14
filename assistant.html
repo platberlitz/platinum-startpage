@@ -2292,6 +2292,12 @@ function renderMessages() {
       editBtn.textContent = 'Edit';
       editBtn.onclick = () => { msg._editing = true; renderMessages(); };
       actions.appendChild(editBtn);
+
+      const forkBtn = document.createElement('button');
+      forkBtn.className = 'msg-action-btn';
+      forkBtn.textContent = 'Fork';
+      forkBtn.onclick = () => forkBranch(idx);
+      actions.appendChild(forkBtn);
     }
 
     const delBtn = document.createElement('button');
@@ -2481,6 +2487,34 @@ function switchBranch(msgIdx, dir) {
   saveConversations();
   renderMessages();
   updateTokenInfo();
+}
+
+async function forkBranch(msgIdx) {
+  if (streaming) return;
+  const msg = messages[msgIdx];
+  if (!msg || msg.role !== 'user') return;
+
+  // Save current continuation as a branch (deep clone)
+  const currentBranch = JSON.parse(JSON.stringify(messages.slice(msgIdx)));
+  if (!msg.branches) {
+    msg.branches = [currentBranch];
+    msg.branchIndex = 1;
+  } else {
+    msg.branches[msg.branchIndex] = currentBranch;
+    msg.branchIndex = msg.branches.length;
+  }
+
+  // Truncate messages after this user message and re-send
+  messages.length = msgIdx + 1;
+  saveConversations();
+  renderMessages();
+  await resendAfterEdit();
+
+  // Save the new branch
+  const newBranch = JSON.parse(JSON.stringify(messages.slice(msgIdx)));
+  msg.branches[msg.branchIndex] = newBranch;
+  saveConversations();
+  renderMessages();
 }
 
 // ============================================
