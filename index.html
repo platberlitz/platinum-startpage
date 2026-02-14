@@ -871,6 +871,130 @@ input[type="file"] {
   justify-content: flex-end;
 }
 
+/* Calculator Button */
+.calc-btn {
+  position: fixed;
+  bottom: 10px;
+  right: 60px;
+  width: 40px;
+  height: 40px;
+  background: var(--card-bg);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--card-border);
+  border-radius: 50%;
+  color: var(--text-primary);
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.3s;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.calc-btn:hover {
+  background: rgba(99, 102, 241, 0.3);
+}
+
+/* Calculator Popup */
+.calc-popup {
+  position: fixed;
+  bottom: 60px;
+  right: 60px;
+  width: 300px;
+  background: rgba(20, 20, 25, 0.95);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--card-border);
+  border-radius: 12px;
+  padding: 16px;
+  z-index: 150;
+  display: none;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.calc-popup.open {
+  display: flex;
+}
+
+.calc-input {
+  width: 100%;
+  padding: 10px 14px;
+  font-size: 14px;
+  font-family: 'Menlo', 'Monaco', 'Consolas', monospace;
+  background: rgba(255, 255, 255, 0.05);
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  color: var(--text-primary);
+  outline: none;
+  transition: all 0.3s ease;
+}
+
+.calc-input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.2);
+}
+
+.calc-input::placeholder {
+  color: var(--text-secondary);
+}
+
+.calc-result {
+  font-size: 1.3em;
+  font-weight: 600;
+  color: var(--accent);
+  text-align: right;
+  min-height: 1.5em;
+  font-family: 'Menlo', 'Monaco', 'Consolas', monospace;
+  padding: 4px 8px;
+  word-break: break-all;
+}
+
+.calc-history {
+  max-height: 120px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  border-top: 1px solid var(--card-border);
+  padding-top: 8px;
+}
+
+.calc-history:empty {
+  display: none;
+}
+
+.calc-history-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.75em;
+  color: var(--text-secondary);
+  padding: 4px 8px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 4px;
+  font-family: 'Menlo', 'Monaco', 'Consolas', monospace;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.calc-history-item:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.calc-history-item .expr {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.calc-history-item .ans {
+  color: var(--accent);
+  margin-left: 8px;
+  font-weight: 500;
+}
+
 /* Responsive */
 @media (max-width: 900px) {
   .grid {
@@ -1008,6 +1132,16 @@ input[type="file"] {
       <div class="quote-text" id="quoteText">Loading...</div>
     </div>
   </div>
+</div>
+
+<!-- Calculator Button -->
+<button class="calc-btn" onclick="toggleCalculator()" title="Calculator">=</button>
+
+<!-- Calculator Popup -->
+<div class="calc-popup" id="calcPopup">
+  <input type="text" class="calc-input" id="calcInput" placeholder="e.g. 2+3*4" autocomplete="off">
+  <div class="calc-result" id="calcResult"></div>
+  <div class="calc-history" id="calcHistory"></div>
 </div>
 
 <!-- Settings Button -->
@@ -1506,6 +1640,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   loadEmoticon();
   loadQuoteDisplay();
   loadQuickLinks();
+  loadCalcHistory();
   await loadSlideshowImages();
   await loadBackgroundImage();
   loadNews();
@@ -2104,6 +2239,7 @@ function exportSettings() {
     emoticon: currentEmoticon,
     notes: document.getElementById('notesArea').value,
     quotes: JSON.parse(localStorage.getItem('userQuotes') || 'null'),
+    calcHistory: JSON.parse(localStorage.getItem('calcHistory') || '[]'),
     settings: {
       bgBlur: localStorage.getItem('bgBlur'),
       cardOpacity: localStorage.getItem('cardOpacity'),
@@ -2149,6 +2285,12 @@ function importSettings(event) {
       if (data.quotes) {
         localStorage.setItem('userQuotes', JSON.stringify(data.quotes));
         loadQuoteDisplay();
+      }
+
+      if (data.calcHistory) {
+        calcHistory = data.calcHistory;
+        saveCalcHistory();
+        renderCalcHistory();
       }
 
       if (data.settings) {
@@ -2225,6 +2367,7 @@ document.querySelectorAll('.modal-overlay').forEach(overlay => {
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') {
     document.getElementById('settingsPanel').classList.remove('open');
+    document.getElementById('calcPopup').classList.remove('open');
     document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('open'));
   }
 });
@@ -2442,6 +2585,191 @@ function loadThemePreset() {
     document.body.style.backgroundColor = bgColor;
   }
 }
+
+// ============================================
+// Calculator
+// ============================================
+let calcHistory = [];
+
+function toggleCalculator() {
+  const popup = document.getElementById('calcPopup');
+  popup.classList.toggle('open');
+  if (popup.classList.contains('open')) {
+    document.getElementById('calcInput').focus();
+  }
+}
+
+function loadCalcHistory() {
+  const saved = localStorage.getItem('calcHistory');
+  calcHistory = saved ? JSON.parse(saved) : [];
+  renderCalcHistory();
+}
+
+function saveCalcHistory() {
+  localStorage.setItem('calcHistory', JSON.stringify(calcHistory));
+}
+
+function renderCalcHistory() {
+  const container = document.getElementById('calcHistory');
+  container.innerHTML = '';
+  calcHistory.forEach((entry, i) => {
+    const item = document.createElement('div');
+    item.className = 'calc-history-item';
+    item.title = `${entry.expr} = ${entry.result}`;
+    item.innerHTML = `<span class="expr">${entry.expr}</span><span class="ans">= ${entry.result}</span>`;
+    item.addEventListener('click', () => {
+      document.getElementById('calcInput').value = entry.expr;
+      evaluateCalcInput();
+    });
+    container.appendChild(item);
+  });
+}
+
+function addToCalcHistory(expr, result) {
+  calcHistory.unshift({ expr, result });
+  if (calcHistory.length > 5) calcHistory.pop();
+  saveCalcHistory();
+  renderCalcHistory();
+}
+
+// Safe math parser — no eval()
+function parseMathExpr(expr) {
+  const tokens = tokenize(expr);
+  if (tokens === null) return null;
+  const result = parseExpression(tokens, { pos: 0 });
+  if (result === null || result.pos !== tokens.length) return null;
+  return result.value;
+}
+
+function tokenize(expr) {
+  const tokens = [];
+  let i = 0;
+  while (i < expr.length) {
+    if (expr[i] === ' ') { i++; continue; }
+    if ('0123456789.'.includes(expr[i])) {
+      let num = '';
+      while (i < expr.length && ('0123456789.'.includes(expr[i]))) {
+        num += expr[i++];
+      }
+      if (num.split('.').length > 2) return null;
+      tokens.push({ type: 'num', value: parseFloat(num) });
+      if (isNaN(tokens[tokens.length - 1].value)) return null;
+    } else if (expr[i] === '*' && i + 1 < expr.length && expr[i + 1] === '*') {
+      tokens.push({ type: 'op', value: '**' });
+      i += 2;
+    } else if ('+-*/%('.includes(expr[i])) {
+      tokens.push({ type: 'op', value: expr[i++] });
+    } else if (expr[i] === ')') {
+      tokens.push({ type: 'op', value: expr[i++] });
+    } else {
+      return null;
+    }
+  }
+  return tokens;
+}
+
+// Recursive descent parser: expr -> term ((+|-) term)*
+function parseExpression(tokens, ctx) {
+  let left = parseTerm(tokens, ctx);
+  if (left === null) return null;
+  while (ctx.pos < tokens.length && tokens[ctx.pos].type === 'op' && (tokens[ctx.pos].value === '+' || tokens[ctx.pos].value === '-')) {
+    const op = tokens[ctx.pos++].value;
+    const right = parseTerm(tokens, ctx);
+    if (right === null) return null;
+    left = { value: op === '+' ? left.value + right.value : left.value - right.value, pos: ctx.pos };
+  }
+  return { value: left.value, pos: ctx.pos };
+}
+
+// term -> power ((*|/|%) power)*
+function parseTerm(tokens, ctx) {
+  let left = parsePower(tokens, ctx);
+  if (left === null) return null;
+  while (ctx.pos < tokens.length && tokens[ctx.pos].type === 'op' && ('*/%'.includes(tokens[ctx.pos].value)) && tokens[ctx.pos].value !== '**') {
+    const op = tokens[ctx.pos++].value;
+    const right = parsePower(tokens, ctx);
+    if (right === null) return null;
+    if (op === '*') left = { value: left.value * right.value, pos: ctx.pos };
+    else if (op === '/') left = { value: right.value === 0 ? Infinity : left.value / right.value, pos: ctx.pos };
+    else left = { value: left.value % right.value, pos: ctx.pos };
+  }
+  return { value: left.value, pos: ctx.pos };
+}
+
+// power -> unary (** power)?
+function parsePower(tokens, ctx) {
+  let base = parseUnary(tokens, ctx);
+  if (base === null) return null;
+  if (ctx.pos < tokens.length && tokens[ctx.pos].type === 'op' && tokens[ctx.pos].value === '**') {
+    ctx.pos++;
+    const exp = parsePower(tokens, ctx);
+    if (exp === null) return null;
+    return { value: Math.pow(base.value, exp.value), pos: ctx.pos };
+  }
+  return { value: base.value, pos: ctx.pos };
+}
+
+// unary -> (+|-) unary | atom
+function parseUnary(tokens, ctx) {
+  if (ctx.pos < tokens.length && tokens[ctx.pos].type === 'op' && (tokens[ctx.pos].value === '+' || tokens[ctx.pos].value === '-')) {
+    const op = tokens[ctx.pos++].value;
+    const operand = parseUnary(tokens, ctx);
+    if (operand === null) return null;
+    return { value: op === '-' ? -operand.value : operand.value, pos: ctx.pos };
+  }
+  return parseAtom(tokens, ctx);
+}
+
+// atom -> number | '(' expr ')'
+function parseAtom(tokens, ctx) {
+  if (ctx.pos >= tokens.length) return null;
+  const tok = tokens[ctx.pos];
+  if (tok.type === 'num') {
+    ctx.pos++;
+    return { value: tok.value, pos: ctx.pos };
+  }
+  if (tok.type === 'op' && tok.value === '(') {
+    ctx.pos++;
+    const inner = parseExpression(tokens, ctx);
+    if (inner === null) return null;
+    if (ctx.pos >= tokens.length || tokens[ctx.pos].value !== ')') return null;
+    ctx.pos++;
+    return { value: inner.value, pos: ctx.pos };
+  }
+  return null;
+}
+
+function evaluateCalcInput() {
+  const input = document.getElementById('calcInput');
+  const resultEl = document.getElementById('calcResult');
+  const expr = input.value.trim();
+  if (!expr) { resultEl.textContent = ''; return; }
+  const result = parseMathExpr(expr);
+  if (result === null || !isFinite(result)) {
+    resultEl.textContent = expr ? 'Error' : '';
+  } else {
+    // Show clean number: up to 10 decimal places, strip trailing zeros
+    resultEl.textContent = parseFloat(result.toFixed(10)).toString();
+  }
+}
+
+// Wire up calculator input events
+document.getElementById('calcInput').addEventListener('input', evaluateCalcInput);
+document.getElementById('calcInput').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
+    const input = document.getElementById('calcInput');
+    const resultEl = document.getElementById('calcResult');
+    const expr = input.value.trim();
+    if (!expr) return;
+    const result = parseMathExpr(expr);
+    if (result !== null && isFinite(result)) {
+      const display = parseFloat(result.toFixed(10)).toString();
+      addToCalcHistory(expr, display);
+      input.value = '';
+      resultEl.textContent = '';
+    }
+  }
+});
 </script>
 
 </body>
