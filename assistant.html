@@ -869,6 +869,45 @@ pre.has-line-numbers { counter-reset: code-line; }
   .conv-pin { display: block; }
   .branch-controls button { padding: 8px 14px; min-height: 36px; }
 }
+
+/* Character card avatar in sidebar */
+.conv-avatar {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+  margin-right: 4px;
+}
+
+/* Character info popup */
+.char-info-popup {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: var(--sidebar-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 16px;
+  padding: 24px;
+  max-width: 480px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+  z-index: 1100;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+}
+.char-info-popup h3 { margin-bottom: 12px; }
+.char-info-popup .char-info-field { margin-bottom: 10px; font-size: 0.85em; }
+.char-info-popup .char-info-label { color: var(--accent); font-weight: 600; font-size: 0.8em; text-transform: uppercase; letter-spacing: 0.03em; margin-bottom: 2px; }
+.char-info-popup .char-info-value { color: var(--text-secondary); white-space: pre-wrap; }
+.char-info-popup .char-info-avatar { width: 64px; height: 64px; border-radius: 50%; object-fit: cover; margin-bottom: 12px; }
+.char-info-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 1099;
+}
 @media (max-width: 768px) {
   .toast { max-width: calc(100vw - 32px); }
   .scroll-fab { width: 44px; height: 44px; bottom: 8px; right: 12px; }
@@ -887,6 +926,8 @@ pre.has-line-numbers { counter-reset: code-line; }
 <div class="sidebar" id="sidebar">
   <div class="sidebar-header">
     <button onclick="createConversation()">+ New Chat</button>
+    <button onclick="document.getElementById('charImportInput').click()" title="Import character card" style="flex:0 0 auto;padding:10px 12px">&#128101;</button>
+    <input type="file" id="charImportInput" accept=".png,.json" style="display:none" onchange="importCharacterCard(event)">
   </div>
   <div class="sidebar-search">
     <input type="text" id="sidebarSearch" placeholder="Search conversations..." oninput="filterConversations()">
@@ -914,6 +955,7 @@ pre.has-line-numbers { counter-reset: code-line; }
         </div>
       </div>
       <input type="file" id="importInput" accept=".json" style="display:none" onchange="importConversation(event)">
+      <button class="toolbar-btn" id="charInfoBtn" onclick="showCharacterInfo()" title="Character info" style="display:none">&#8505;</button>
       <button class="toolbar-btn" onclick="openSettings()" title="Settings">&#9881;</button>
       <button class="toolbar-btn" id="themeToggle" onclick="toggleTheme()" title="Theme: dark">&#9790;</button>
     </div>
@@ -998,14 +1040,26 @@ pre.has-line-numbers { counter-reset: code-line; }
     </select>
 
     <div class="modal-section">Prompts</div>
+    <label>Preset</label>
+    <div class="model-selector-row">
+      <select id="setPresetSelect" onchange="applyPreset(this.value)">
+        <option value="">-- Custom --</option>
+      </select>
+      <button class="model-refresh-btn" onclick="saveCurrentAsPreset()" title="Save as preset">&#128190;</button>
+      <button class="model-refresh-btn" onclick="deleteSelectedPreset()" title="Delete preset">&#128465;</button>
+    </div>
     <label>System Prompt</label>
-    <input type="text" id="setSystemPrompt" placeholder="You are a helpful assistant.">
+    <textarea id="setSystemPrompt" placeholder="You are a helpful assistant." rows="3"></textarea>
     <label>Persona (optional)</label>
     <textarea id="setPersona" placeholder="Describe yourself so the AI can personalize responses..."></textarea>
 
     <div class="modal-section">Request Parameters</div>
     <label class="toggle-row">
       <input type="checkbox" id="setStreaming" checked> Streaming
+    </label>
+    <label class="toggle-row">
+      <input type="checkbox" id="setEnterSend" checked> Enter sends message
+      <span class="toggle-hint">Ctrl+Enter if off</span>
     </label>
     <label>Temperature</label>
     <input type="number" id="setTemperature" step="0.1" min="0" max="2" placeholder="e.g. 0.7 (leave empty for default)">
@@ -1067,8 +1121,9 @@ pre.has-line-numbers { counter-reset: code-line; }
   <div class="modal" style="max-width:480px">
     <h2>Keyboard Shortcuts</h2>
     <div style="display:grid;grid-template-columns:auto 1fr;gap:8px 16px;font-size:0.85em">
-      <kbd style="background:var(--hover);padding:2px 8px;border-radius:4px;font-family:inherit;white-space:nowrap">Enter</kbd><span>Send message</span>
+      <kbd style="background:var(--hover);padding:2px 8px;border-radius:4px;font-family:inherit;white-space:nowrap">Enter</kbd><span>Send message (configurable)</span>
       <kbd style="background:var(--hover);padding:2px 8px;border-radius:4px;font-family:inherit;white-space:nowrap">Shift+Enter</kbd><span>New line in input</span>
+      <kbd style="background:var(--hover);padding:2px 8px;border-radius:4px;font-family:inherit;white-space:nowrap">Ctrl+Enter</kbd><span>Always sends message</span>
       <kbd style="background:var(--hover);padding:2px 8px;border-radius:4px;font-family:inherit;white-space:nowrap">Ctrl+N</kbd><span>New conversation</span>
       <kbd style="background:var(--hover);padding:2px 8px;border-radius:4px;font-family:inherit;white-space:nowrap">Ctrl+/</kbd><span>Focus input</span>
       <kbd style="background:var(--hover);padding:2px 8px;border-radius:4px;font-family:inherit;white-space:nowrap">Ctrl+K</kbd><span>Search conversations</span>
@@ -1436,6 +1491,13 @@ document.addEventListener('DOMContentLoaded', () => {
       if (e.defaultPrevented) return;
     }
     if (e.key === 'Enter' && !e.shiftKey) {
+      const enterSends = localStorage.getItem('llmEnterSend') !== 'false';
+      if (enterSends) {
+        e.preventDefault();
+        sendMessage();
+      }
+    }
+    if (e.key === 'Enter' && e.ctrlKey) {
       e.preventDefault();
       sendMessage();
     }
@@ -1772,6 +1834,7 @@ function loadConversations() {
   renderSidebar();
   renderMessages();
   updateTokenInfo();
+  updateCharacterUI();
 }
 
 function getActiveConv() { return conversations.find(c => c.id === activeConvId); }
@@ -1785,6 +1848,7 @@ function createConversation() {
   renderSidebar();
   renderMessages();
   updateTokenInfo();
+  updateCharacterUI();
   if (window.innerWidth <= 768) toggleSidebar();
 }
 
@@ -1797,6 +1861,7 @@ function switchConversation(id) {
   renderSidebar();
   renderMessages();
   updateTokenInfo();
+  updateCharacterUI();
   if (window.innerWidth <= 768) toggleSidebar();
 }
 
@@ -1905,6 +1970,12 @@ function renderSidebar() {
     del.onclick = (e) => deleteConversation(c.id, e);
 
     div.appendChild(pinBtn);
+    if (c.characterAvatar) {
+      const avatar = document.createElement('img');
+      avatar.className = 'conv-avatar';
+      avatar.src = c.characterAvatar;
+      div.appendChild(avatar);
+    }
     div.appendChild(title);
     div.appendChild(del);
     list.appendChild(div);
@@ -1996,11 +2067,15 @@ function openSettings() {
   document.getElementById('setExtraParams').value = localStorage.getItem('llmExtraParams') || '';
   document.getElementById('setExcludeParams').value = localStorage.getItem('llmExcludeParams') || '';
   document.getElementById('setStreaming').checked = localStorage.getItem('llmStreaming') !== 'false';
+  document.getElementById('setEnterSend').checked = localStorage.getItem('llmEnterSend') !== 'false';
   document.getElementById('setTemperature').value = localStorage.getItem('llmTemperature') || '';
   document.getElementById('setInputCost').value = localStorage.getItem('llmInputCost') || '';
   document.getElementById('setOutputCost').value = localStorage.getItem('llmOutputCost') || '';
   document.getElementById('setFont').value = localStorage.getItem('assistantFont') || '';
   document.getElementById('setWebSearch').checked = localStorage.getItem('llmWebSearch') === 'true';
+
+  // Presets
+  loadPresets();
 
   // Theme
   const currentTheme = localStorage.getItem('assistantTheme') || 'dark';
@@ -2048,6 +2123,7 @@ function saveSettings() {
   localStorage.setItem('llmExtraParams', extraParamsVal);
   localStorage.setItem('llmExcludeParams', document.getElementById('setExcludeParams').value.trim());
   localStorage.setItem('llmStreaming', document.getElementById('setStreaming').checked ? 'true' : 'false');
+  localStorage.setItem('llmEnterSend', document.getElementById('setEnterSend').checked ? 'true' : 'false');
   const tempVal = document.getElementById('setTemperature').value.trim();
   localStorage.setItem('llmTemperature', tempVal);
   localStorage.setItem('llmInputCost', document.getElementById('setInputCost').value.trim());
@@ -2081,6 +2157,66 @@ function closeSettings() {
   document.getElementById('settingsModal').classList.remove('open');
   // Revert theme if user didn't save
   loadTheme();
+}
+
+// ============================================
+// System Prompt Presets
+// ============================================
+function loadPresets() {
+  let presets = [];
+  try { presets = JSON.parse(localStorage.getItem('assistantPresets') || '[]'); } catch(e) {}
+  const select = document.getElementById('setPresetSelect');
+  select.innerHTML = '<option value="">-- Custom --</option>';
+  presets.forEach(p => {
+    const opt = document.createElement('option');
+    opt.value = p.id;
+    opt.textContent = p.name;
+    select.appendChild(opt);
+  });
+  return presets;
+}
+
+function applyPreset(id) {
+  if (!id) return;
+  let presets = [];
+  try { presets = JSON.parse(localStorage.getItem('assistantPresets') || '[]'); } catch(e) {}
+  const preset = presets.find(p => p.id === id);
+  if (!preset) return;
+  document.getElementById('setSystemPrompt').value = preset.systemPrompt || '';
+  document.getElementById('setPersona').value = preset.persona || '';
+}
+
+function saveCurrentAsPreset() {
+  const name = prompt('Preset name:');
+  if (!name) return;
+  let presets = [];
+  try { presets = JSON.parse(localStorage.getItem('assistantPresets') || '[]'); } catch(e) {}
+  const preset = {
+    id: 'preset_' + Date.now(),
+    name: name,
+    systemPrompt: document.getElementById('setSystemPrompt').value.trim(),
+    persona: document.getElementById('setPersona').value.trim()
+  };
+  presets.push(preset);
+  localStorage.setItem('assistantPresets', JSON.stringify(presets));
+  loadPresets();
+  document.getElementById('setPresetSelect').value = preset.id;
+  showToast('Preset saved: ' + name, 'success');
+}
+
+function deleteSelectedPreset() {
+  const select = document.getElementById('setPresetSelect');
+  const id = select.value;
+  if (!id) { showToast('Select a preset to delete.', 'info'); return; }
+  let presets = [];
+  try { presets = JSON.parse(localStorage.getItem('assistantPresets') || '[]'); } catch(e) {}
+  const preset = presets.find(p => p.id === id);
+  if (!preset) return;
+  if (!confirm('Delete preset "' + preset.name + '"?')) return;
+  presets = presets.filter(p => p.id !== id);
+  localStorage.setItem('assistantPresets', JSON.stringify(presets));
+  loadPresets();
+  showToast('Preset deleted.', 'info');
 }
 
 // ============================================
@@ -2251,8 +2387,8 @@ function renderEditMode(area, msg, idx) {
     const editedText = ta.value;
     delete msg._editing;
 
-    // Save old branch before truncating
-    const oldBranch = messages.slice(idx);
+    // Save old branch before truncating (deep clone to prevent mutation)
+    const oldBranch = JSON.parse(JSON.stringify(messages.slice(idx)));
     if (!msg.branches) {
       msg.branches = [oldBranch];
       msg.branchIndex = 1;
@@ -2269,7 +2405,7 @@ function renderEditMode(area, msg, idx) {
     await resendAfterEdit();
 
     // Save new branch (after response)
-    const newBranch = messages.slice(idx);
+    const newBranch = JSON.parse(JSON.stringify(messages.slice(idx)));
     msg.branches[msg.branchIndex] = newBranch;
     saveConversations();
     renderMessages();
@@ -2284,7 +2420,8 @@ function renderEditMode(area, msg, idx) {
 async function resendAfterEdit() {
   const proxyUrl = localStorage.getItem('llmProxyUrl');
   const apiKey = localStorage.getItem('llmApiKey');
-  const systemPrompt = localStorage.getItem('llmSystemPrompt') || 'You are a helpful assistant.';
+  const conv = getActiveConv();
+  const systemPrompt = getConversationSystemPrompt(conv);
   const persona = localStorage.getItem('llmPersona') || '';
   if (!proxyUrl || !apiKey) return;
 
@@ -2307,7 +2444,6 @@ async function resendAfterEdit() {
 
   await streamResponse(apiMessages, assistantMsg, 0, bubble);
 
-  const conv = getActiveConv();
   if (conv) conv.updatedAt = Date.now();
   saveConversations();
   renderMessages();
@@ -2332,8 +2468,8 @@ function swipeMsg(idx, dir) {
 function switchBranch(msgIdx, dir) {
   const msg = messages[msgIdx];
   if (!msg || !msg.branches) return;
-  // Save current continuation as the current branch
-  msg.branches[msg.branchIndex] = messages.slice(msgIdx);
+  // Save current continuation as the current branch (deep clone)
+  msg.branches[msg.branchIndex] = JSON.parse(JSON.stringify(messages.slice(msgIdx)));
   // Switch
   const newIdx = Math.max(0, Math.min(msg.branches.length - 1, msg.branchIndex + dir));
   if (newIdx === msg.branchIndex) return;
@@ -2632,7 +2768,8 @@ async function sendMessage() {
 
   const proxyUrl = localStorage.getItem('llmProxyUrl');
   const apiKey = localStorage.getItem('llmApiKey');
-  const systemPrompt = localStorage.getItem('llmSystemPrompt') || 'You are a helpful assistant.';
+  const conv = getActiveConv();
+  const systemPrompt = getConversationSystemPrompt(conv);
   const persona = localStorage.getItem('llmPersona') || '';
 
   if (!proxyUrl || !apiKey) {
@@ -2656,7 +2793,6 @@ async function sendMessage() {
   input.style.height = 'auto';
 
   // Auto-title
-  const conv = getActiveConv();
   if (conv && conv.title === 'New Chat') {
     conv.title = (text || 'Image chat').slice(0, 40);
     renderSidebar();
@@ -2718,7 +2854,8 @@ async function regenerate() {
   const bubble = lastWrapper.querySelector('.msg-bubble');
   bubble.innerHTML = '<div class="typing-dots"><span></span><span></span><span></span></div>';
 
-  const systemPrompt = localStorage.getItem('llmSystemPrompt') || 'You are a helpful assistant.';
+  const conv = getActiveConv();
+  const systemPrompt = getConversationSystemPrompt(conv);
   const persona = localStorage.getItem('llmPersona') || '';
   const apiMessages = [{ role: 'system', content: systemPrompt }];
   if (persona) apiMessages.push({ role: 'system', content: 'About the user: ' + persona });
@@ -2728,7 +2865,6 @@ async function regenerate() {
 
   await streamResponse(apiMessages, msg, msg.swipeIndex, bubble);
 
-  const conv = getActiveConv();
   if (conv) conv.updatedAt = Date.now();
   saveConversations();
   renderMessages();
@@ -3053,6 +3189,183 @@ function handleMentionKeydown(e, ta) {
   } else if (e.key === 'Escape') {
     closeMentionDropdown();
   }
+}
+
+// ============================================
+// Character Card Import (PNG + JSON)
+// ============================================
+function extractCharaFromPNG(arrayBuffer) {
+  const view = new DataView(arrayBuffer);
+  let offset = 8; // skip PNG signature
+  while (offset < view.byteLength) {
+    const len = view.getUint32(offset);
+    const typeBytes = new Uint8Array(arrayBuffer, offset + 4, 4);
+    const type = String.fromCharCode(...typeBytes);
+    if (type === 'tEXt') {
+      const data = new Uint8Array(arrayBuffer, offset + 8, len);
+      const nullIdx = data.indexOf(0);
+      const keyword = new TextDecoder().decode(data.slice(0, nullIdx));
+      if (keyword === 'chara') {
+        const text = new TextDecoder().decode(data.slice(nullIdx + 1));
+        return JSON.parse(atob(text));
+      }
+    }
+    offset += 12 + len; // 4 length + 4 type + data + 4 CRC
+  }
+  return null;
+}
+
+function normalizeCharaCard(raw) {
+  // V2 format wraps in { spec, data }
+  if (raw.spec === 'chara_card_v2' && raw.data) return raw.data;
+  // V1 is flat
+  if (raw.name || raw.description || raw.first_mes) return raw;
+  return raw;
+}
+
+function buildCharaSystemPrompt(card) {
+  let parts = [];
+  if (card.system_prompt) {
+    parts.push(card.system_prompt);
+  }
+  if (card.name) parts.push('Character: ' + card.name);
+  if (card.description) parts.push(card.description);
+  if (card.personality) parts.push('Personality: ' + card.personality);
+  if (card.scenario) parts.push('Scenario: ' + card.scenario);
+  if (card.mes_example) parts.push('Example dialogue:\n' + card.mes_example);
+  return parts.join('\n\n');
+}
+
+async function importCharacterCard(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  event.target.value = '';
+
+  try {
+    let rawCard = null;
+    let avatarDataUrl = null;
+
+    if (file.name.toLowerCase().endsWith('.png')) {
+      const arrayBuffer = await file.arrayBuffer();
+      rawCard = extractCharaFromPNG(arrayBuffer);
+      if (!rawCard) { showToast('No character data found in PNG.', 'error'); return; }
+      // Also store the PNG as avatar
+      const blob = new Blob([arrayBuffer], { type: 'image/png' });
+      avatarDataUrl = await new Promise(resolve => {
+        const reader = new FileReader();
+        reader.onload = e => resolve(e.target.result);
+        reader.readAsDataURL(blob);
+      });
+    } else if (file.name.toLowerCase().endsWith('.json')) {
+      const text = await file.text();
+      rawCard = JSON.parse(text);
+    } else {
+      showToast('Unsupported file type. Use .png or .json.', 'error');
+      return;
+    }
+
+    const card = normalizeCharaCard(rawCard);
+    const charName = card.name || 'Character';
+    const systemPrompt = buildCharaSystemPrompt(card);
+
+    // Create a new conversation
+    const conv = {
+      id: genId(),
+      title: charName,
+      messages: [],
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+      characterCard: card,
+      characterSystemPrompt: systemPrompt
+    };
+
+    if (avatarDataUrl) conv.characterAvatar = avatarDataUrl;
+
+    // Add first message if present
+    if (card.first_mes) {
+      conv.messages.push({
+        role: 'assistant',
+        content: card.first_mes,
+        swipes: [card.first_mes],
+        swipeIndex: 0
+      });
+    }
+
+    conversations.unshift(conv);
+    activeConvId = conv.id;
+    messages = conv.messages;
+    saveConversations();
+    renderSidebar();
+    renderMessages();
+    updateTokenInfo();
+    updateCharacterUI();
+
+    showToast('Character imported: ' + charName, 'success');
+    if (window.innerWidth <= 768) toggleSidebar();
+  } catch (err) {
+    showToast('Error importing character: ' + err.message, 'error');
+  }
+}
+
+function getConversationSystemPrompt(conv) {
+  if (conv && conv.characterSystemPrompt) return conv.characterSystemPrompt;
+  return localStorage.getItem('llmSystemPrompt') || 'You are a helpful assistant.';
+}
+
+function updateCharacterUI() {
+  const conv = getActiveConv();
+  const infoBtn = document.getElementById('charInfoBtn');
+  const titleEl = document.querySelector('.toolbar-title');
+  if (conv && conv.characterCard) {
+    infoBtn.style.display = '';
+    titleEl.textContent = conv.characterCard.name || conv.title;
+  } else {
+    infoBtn.style.display = 'none';
+    titleEl.textContent = 'AI Assistant';
+  }
+}
+
+function showCharacterInfo() {
+  const conv = getActiveConv();
+  if (!conv || !conv.characterCard) return;
+  const card = conv.characterCard;
+
+  // Remove existing popup
+  document.querySelectorAll('.char-info-overlay,.char-info-popup').forEach(el => el.remove());
+
+  const overlay = document.createElement('div');
+  overlay.className = 'char-info-overlay';
+  overlay.onclick = () => { overlay.remove(); popup.remove(); };
+
+  const popup = document.createElement('div');
+  popup.className = 'char-info-popup';
+
+  let html = '';
+  if (conv.characterAvatar) {
+    html += '<img class="char-info-avatar" src="' + conv.characterAvatar.replace(/"/g, '&quot;') + '">';
+  }
+  html += '<h3>' + (card.name || 'Character').replace(/&/g, '&amp;').replace(/</g, '&lt;') + '</h3>';
+
+  const fields = [
+    ['Description', card.description],
+    ['Personality', card.personality],
+    ['Scenario', card.scenario],
+    ['First Message', card.first_mes],
+    ['System Prompt', card.system_prompt],
+    ['Example Dialogue', card.mes_example],
+    ['Creator Notes', card.creator_notes]
+  ];
+  fields.forEach(([label, value]) => {
+    if (!value) return;
+    html += '<div class="char-info-field"><div class="char-info-label">' + label + '</div>' +
+      '<div class="char-info-value">' + value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</div></div>';
+  });
+
+  html += '<button class="btn btn-primary" style="margin-top:12px;width:100%" onclick="this.parentElement.previousElementSibling.click()">Close</button>';
+  popup.innerHTML = html;
+
+  document.body.appendChild(overlay);
+  document.body.appendChild(popup);
 }
 
 // ============================================
