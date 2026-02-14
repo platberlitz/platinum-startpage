@@ -75,12 +75,11 @@ body::before {
   display: grid;
   gap: 16px;
   grid-template-columns: 1fr 1fr 1fr;
-  grid-template-rows: auto auto auto 1fr auto;
+  grid-template-rows: auto auto 1fr auto;
   grid-template-areas:
     "search search search"
     "weather timezones links"
     "slideshow notes news"
-    "chat chat chat"
     "emoticon quote quote";
   height: calc(100vh - 20px);
 }
@@ -897,6 +896,30 @@ input[type="file"] {
   background: rgba(99, 102, 241, 0.3);
 }
 
+/* Chat Toggle Button */
+.chat-toggle-btn {
+  position: fixed;
+  bottom: 10px;
+  right: 110px;
+  width: 40px;
+  height: 40px;
+  background: var(--card-bg);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--card-border);
+  border-radius: 50%;
+  color: var(--text-primary);
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.3s;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.chat-toggle-btn:hover {
+  background: rgba(99, 102, 241, 0.3);
+}
+
 /* Calculator Popup */
 .calc-popup {
   position: fixed;
@@ -996,12 +1019,41 @@ input[type="file"] {
   font-weight: 500;
 }
 
-/* Chat Card */
+/* Chat Card - Floating Panel */
 .chat-card {
-  grid-area: chat;
-  display: flex;
+  position: fixed;
+  bottom: 60px;
+  right: 120px;
+  width: 400px;
+  height: 450px;
+  background: rgba(20, 20, 25, 0.95);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--card-border);
+  border-radius: 12px;
+  padding: 10px;
+  z-index: 150;
+  display: none;
   flex-direction: column;
   min-height: 0;
+  resize: both;
+  overflow: hidden;
+}
+
+.chat-card.open {
+  display: flex;
+}
+
+.chat-card:hover {
+  transform: none;
+  box-shadow: none;
+}
+
+.chat-card .card-header {
+  cursor: grab;
+  user-select: none;
+}
+.chat-card .card-header:active {
+  cursor: grabbing;
 }
 
 .chat-messages {
@@ -1128,13 +1180,12 @@ input[type="file"] {
 @media (max-width: 900px) {
   .grid {
     grid-template-columns: 1fr 1fr;
-    grid-template-rows: auto auto auto auto auto auto;
+    grid-template-rows: auto auto auto auto auto;
     grid-template-areas:
       "search search"
       "weather timezones"
       "links slideshow"
       "notes news"
-      "chat chat"
       "emoticon quote";
     height: auto;
   }
@@ -1152,7 +1203,6 @@ input[type="file"] {
       "slideshow"
       "notes"
       "news"
-      "chat"
       "emoticon"
       "quote";
     height: auto;
@@ -1262,23 +1312,26 @@ input[type="file"] {
     <div class="card quote-card">
       <div class="quote-text" id="quoteText">Loading...</div>
     </div>
-
-    <!-- Chat Card -->
-    <div class="card chat-card">
-      <div class="card-header">
-        <span class="card-title">Ask AI</span>
-        <button class="add-btn" onclick="clearChat()">Clear</button>
-      </div>
-      <div class="chat-messages" id="chatMessages">
-        <div class="chat-placeholder">Ask me anything...</div>
-      </div>
-      <div class="chat-input-row">
-        <input type="text" class="chat-input" id="chatInput" placeholder="Type a question...">
-        <button class="chat-send-btn" id="chatSendBtn" onclick="sendChatMessage()">Send</button>
-      </div>
-    </div>
   </div>
 </div>
+
+<!-- Chat Panel (floating) -->
+<div class="chat-card">
+  <div class="card-header">
+    <span class="card-title">Ask AI</span>
+    <button class="add-btn" onclick="clearChat()">Clear</button>
+  </div>
+  <div class="chat-messages" id="chatMessages">
+    <div class="chat-placeholder">Ask me anything...</div>
+  </div>
+  <div class="chat-input-row">
+    <input type="text" class="chat-input" id="chatInput" placeholder="Type a question...">
+    <button class="chat-send-btn" id="chatSendBtn" onclick="sendChatMessage()">Send</button>
+  </div>
+</div>
+
+<!-- Chat Toggle Button -->
+<button class="chat-toggle-btn" onclick="toggleChat()" title="Ask AI">💬</button>
 
 <!-- Calculator Button -->
 <button class="calc-btn" onclick="toggleCalculator()" title="Calculator">=</button>
@@ -1634,7 +1687,6 @@ function applyGridLayout(layout) {
     "search search search"
     "${layout.row2.join(' ')}"
     "${layout.row3.join(' ')}"
-    "chat chat chat"
     "emoticon quote quote"
   `;
   grid.style.gridTemplateAreas = areas;
@@ -2558,6 +2610,7 @@ document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') {
     document.getElementById('settingsPanel').classList.remove('open');
     document.getElementById('calcPopup').classList.remove('open');
+    document.querySelector('.chat-card').classList.remove('open');
     document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('open'));
   }
 });
@@ -2775,6 +2828,61 @@ function loadThemePreset() {
     document.body.style.backgroundColor = bgColor;
   }
 }
+
+// ============================================
+// Chat Panel (floating, draggable)
+// ============================================
+function toggleChat() {
+  const panel = document.querySelector('.chat-card');
+  panel.classList.toggle('open');
+  if (panel.classList.contains('open')) {
+    document.getElementById('chatInput').focus();
+  }
+}
+
+(function initChatDrag() {
+  const panel = document.querySelector('.chat-card');
+  const header = panel.querySelector('.card-header');
+  let isDragging = false;
+  let offsetX = 0, offsetY = 0;
+
+  header.addEventListener('mousedown', (e) => {
+    if (e.target.closest('.add-btn')) return;
+    isDragging = true;
+    offsetX = e.clientX - panel.getBoundingClientRect().left;
+    offsetY = e.clientY - panel.getBoundingClientRect().top;
+    e.preventDefault();
+  });
+
+  document.addEventListener('mousemove', (e) => {
+    if (!isDragging) return;
+    const x = e.clientX - offsetX;
+    const y = e.clientY - offsetY;
+    panel.style.left = x + 'px';
+    panel.style.top = y + 'px';
+    panel.style.right = 'auto';
+    panel.style.bottom = 'auto';
+  });
+
+  document.addEventListener('mouseup', () => {
+    if (!isDragging) return;
+    isDragging = false;
+    localStorage.setItem('chatPanelPos', JSON.stringify({
+      left: panel.style.left,
+      top: panel.style.top
+    }));
+  });
+
+  // Restore saved position
+  const saved = localStorage.getItem('chatPanelPos');
+  if (saved) {
+    const pos = JSON.parse(saved);
+    panel.style.left = pos.left;
+    panel.style.top = pos.top;
+    panel.style.right = 'auto';
+    panel.style.bottom = 'auto';
+  }
+})();
 
 // ============================================
 // Calculator
