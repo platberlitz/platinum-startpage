@@ -2509,7 +2509,7 @@ function switchBranch(msgIdx, dir) {
   updateTokenInfo();
 }
 
-async function forkBranch(msgIdx) {
+function forkBranch(msgIdx) {
   if (streaming) return;
   const msg = messages[msgIdx];
   if (!msg || msg.role !== 'user') return;
@@ -2524,17 +2524,13 @@ async function forkBranch(msgIdx) {
     msg.branchIndex = msg.branches.length;
   }
 
-  // Truncate messages after this user message and re-send
+  // Truncate messages after this user message
   messages.length = msgIdx + 1;
-  saveConversations();
-  renderMessages();
-  await resendAfterEdit();
-
-  // Save the new branch
   const newBranch = JSON.parse(JSON.stringify(messages.slice(msgIdx)));
   msg.branches[msg.branchIndex] = newBranch;
   saveConversations();
   renderMessages();
+  updateTokenInfo();
 }
 
 // ============================================
