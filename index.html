@@ -1883,7 +1883,8 @@ const defaultQuickLinks = [
   { icon: '🐙', label: 'GitHub', url: 'https://github.com' },
   { icon: '🔴', label: 'Reddit', url: 'https://reddit.com' },
   { icon: '🐦', label: 'Twitter', url: 'https://twitter.com' },
-  { icon: '🤖', label: 'AI Assistant', url: 'assistant.html' }
+  { icon: '🤖', label: 'AI Assistant', url: 'assistant.html' },
+  { icon: '🎨', label: 'SD Proxy', url: 'https://purasdproxy.duckdns.org:3001', title: 'Admin: purachina / purapura · Uses localStorage — your gens are private' }
 ];
 
 const themePresets = {
@@ -2825,6 +2826,7 @@ function renderQuickLinks() {
     a.target = '_blank';
     a.rel = 'noopener noreferrer';
     a.innerHTML = `<span class="link-icon">${link.icon}</span><span>${link.label}</span>`;
+    if (link.title) a.title = link.title;
     grid.appendChild(a);
   });
 }
