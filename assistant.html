@@ -176,6 +176,41 @@ body {
 }
 .toolbar-btn:hover { color: var(--text-primary); background: var(--hover); }
 
+/* Toolbar more menu */
+.toolbar-more {
+  position: relative;
+}
+.toolbar-menu {
+  display: none;
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 4px;
+  background: var(--sidebar-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 8px;
+  min-width: 180px;
+  z-index: 100;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+  overflow: hidden;
+}
+.toolbar-menu.open { display: block; }
+.toolbar-menu button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 10px 14px;
+  font-family: inherit;
+  font-size: 0.85em;
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  text-align: left;
+}
+.toolbar-menu button:hover { background: var(--hover); color: var(--text-primary); }
+
 .theme-flash {
   position: absolute;
   bottom: -22px;
@@ -868,12 +903,17 @@ pre.has-line-numbers { counter-reset: code-line; }
       <span class="toolbar-title">AI Assistant</span>
     </div>
     <div class="toolbar-right">
-      <button class="toolbar-btn" onclick="exportConversation()" title="Export chat (JSON)">&#8615;</button>
-      <button class="toolbar-btn" onclick="exportMarkdown()" title="Export as Markdown">&#128221;</button>
-      <button class="toolbar-btn" onclick="exportAllConversations()" title="Export all conversations">&#8659;</button>
-      <button class="toolbar-btn" onclick="document.getElementById('importInput').click()" title="Import chat">&#8613;</button>
+      <div class="toolbar-more">
+        <button class="toolbar-btn" onclick="toggleToolbarMenu(event)" title="More actions">&#8943;</button>
+        <div class="toolbar-menu" id="toolbarMenu">
+          <button onclick="exportConversation();closeToolbarMenu()">&#8615; Export chat (JSON)</button>
+          <button onclick="exportMarkdown();closeToolbarMenu()">&#128221; Export as Markdown</button>
+          <button onclick="exportAllConversations();closeToolbarMenu()">&#8659; Export all chats</button>
+          <button onclick="document.getElementById('importInput').click();closeToolbarMenu()">&#8613; Import chat</button>
+          <button onclick="clearChat();closeToolbarMenu()">&#128465; Clear chat</button>
+        </div>
+      </div>
       <input type="file" id="importInput" accept=".json" style="display:none" onchange="importConversation(event)">
-      <button class="toolbar-btn" onclick="clearChat()" title="Clear chat">&#128465;</button>
       <button class="toolbar-btn" onclick="openSettings()" title="Settings">&#9881;</button>
       <button class="toolbar-btn" id="themeToggle" onclick="toggleTheme()" title="Theme: dark">&#9790;</button>
     </div>
@@ -1904,6 +1944,18 @@ function toggleSidebar() {
   sb.classList.toggle('collapsed');
   overlay.classList.toggle('open', !sb.classList.contains('collapsed') && window.innerWidth <= 768);
 }
+
+// ============================================
+// Toolbar Menu
+// ============================================
+function toggleToolbarMenu(e) {
+  e.stopPropagation();
+  document.getElementById('toolbarMenu').classList.toggle('open');
+}
+function closeToolbarMenu() {
+  document.getElementById('toolbarMenu').classList.remove('open');
+}
+document.addEventListener('click', () => closeToolbarMenu());
 
 // ============================================
 // Setup & Settings
