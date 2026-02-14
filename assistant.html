@@ -816,6 +816,22 @@ pre.has-line-numbers { counter-reset: code-line; }
 .search-highlight { background: rgba(255, 200, 50, 0.3); border-radius: 2px; }
 .search-highlight.active { background: rgba(255, 200, 50, 0.6); }
 
+/* Spoiler tags */
+.spoiler {
+  background: var(--text-primary);
+  color: transparent;
+  border-radius: 4px;
+  padding: 1px 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+  user-select: none;
+}
+.spoiler.revealed {
+  background: var(--hover);
+  color: var(--text-primary);
+  user-select: auto;
+}
+
 /* @model mentions */
 .model-override-badge {
   display: none;
@@ -1612,6 +1628,8 @@ function renderMarkdown(text) {
   // Decode HTML entities that models sometimes output before escaping
   s = s.replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'");
   s = s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  // Spoiler tags >!hidden text!<
+  s = s.replace(/&gt;!([\s\S]*?)!&lt;/g, '<span class="spoiler" onclick="this.classList.toggle(\'revealed\')">$1</span>');
   // Mermaid code blocks
   s = s.replace(/```mermaid\n([\s\S]*?)```/g, (_, code) =>
     '<div class="mermaid-container"><pre class="mermaid">' + code.trimEnd() + '</pre></div>');
