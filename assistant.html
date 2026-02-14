@@ -2764,7 +2764,24 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl, ove
         assistantMsg.content = fullText;
         const now = Date.now();
         if (now - lastRender > 80) {
+          // Preserve open/closed state of thinking & tool blocks
+          const thinkingOpen = bubbleEl.querySelector('.thinking-content.open') !== null;
+          const toolOpen = Array.from(bubbleEl.querySelectorAll('.tool-use-results')).map(el => el.classList.contains('open'));
           bubbleEl.innerHTML = renderThinkingHTML(thinkingText) + renderToolBlocksHTML(toolBlocks) + renderMarkdown(fullText);
+          if (thinkingOpen) {
+            const tc = bubbleEl.querySelector('.thinking-content');
+            const ta = bubbleEl.querySelector('.thinking-arrow');
+            if (tc) tc.classList.add('open');
+            if (ta) ta.textContent = '\u25BE';
+          }
+          toolOpen.forEach((open, i) => {
+            if (open) {
+              const results = bubbleEl.querySelectorAll('.tool-use-results')[i];
+              const arrow = bubbleEl.querySelectorAll('.tool-use-arrow')[i];
+              if (results) results.classList.add('open');
+              if (arrow) arrow.textContent = '\u25BE';
+            }
+          });
           document.getElementById('messagesArea').scrollTop = document.getElementById('messagesArea').scrollHeight;
           lastRender = now;
         }
