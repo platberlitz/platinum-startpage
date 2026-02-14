@@ -10,8 +10,7 @@
 <style>
 :root {
   --bg: #0a0a0f;
-  --sidebar-bg: rgba(20, 20, 25, 0.95);
-  --card-bg: rgba(30, 30, 35, 0.85);
+  --sidebar-bg: #14141a;
   --card-border: rgba(255, 255, 255, 0.08);
   --text-primary: rgba(255, 255, 255, 0.95);
   --text-secondary: rgba(255, 255, 255, 0.6);
@@ -19,17 +18,7 @@
   --accent-hover: #818cf8;
   --msg-user: #6366f1;
   --msg-assistant: rgba(255, 255, 255, 0.08);
-}
-
-[data-theme="light"] {
-  --bg: #f5f5f7;
-  --sidebar-bg: rgba(240, 240, 245, 0.98);
-  --card-bg: rgba(255, 255, 255, 0.9);
-  --card-border: rgba(0, 0, 0, 0.1);
-  --text-primary: rgba(0, 0, 0, 0.9);
-  --text-secondary: rgba(0, 0, 0, 0.5);
-  --msg-user: #6366f1;
-  --msg-assistant: rgba(0, 0, 0, 0.05);
+  --hover: rgba(255, 255, 255, 0.05);
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -53,7 +42,6 @@ body {
   flex-shrink: 0;
   transition: margin-left 0.3s ease;
 }
-
 .sidebar.collapsed { margin-left: -260px; }
 
 .sidebar-header {
@@ -62,7 +50,6 @@ body {
   display: flex;
   gap: 8px;
 }
-
 .sidebar-header button {
   flex: 1;
   padding: 10px;
@@ -77,6 +64,24 @@ body {
   transition: background 0.2s;
 }
 .sidebar-header button:hover { background: var(--accent-hover); }
+
+.sidebar-search {
+  padding: 8px 8px 0;
+}
+.sidebar-search input {
+  width: 100%;
+  padding: 8px 10px;
+  font-family: inherit;
+  font-size: 0.82em;
+  background: var(--hover);
+  border: 1px solid var(--card-border);
+  border-radius: 6px;
+  color: var(--text-primary);
+  outline: none;
+  transition: border-color 0.2s;
+}
+.sidebar-search input:focus { border-color: var(--accent); }
+.sidebar-search input::placeholder { color: var(--text-secondary); }
 
 .conv-list {
   flex: 1;
@@ -96,8 +101,7 @@ body {
   align-items: center;
   margin-bottom: 2px;
 }
-
-.conv-item:hover { background: rgba(255, 255, 255, 0.05); }
+.conv-item:hover { background: var(--hover); }
 .conv-item.active { background: rgba(99, 102, 241, 0.15); color: var(--text-primary); }
 
 .conv-item .conv-title {
@@ -106,7 +110,6 @@ body {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-
 .conv-item .conv-delete {
   display: none;
   background: none;
@@ -139,9 +142,7 @@ body {
   background: var(--sidebar-bg);
   flex-shrink: 0;
 }
-
 .toolbar-left { display: flex; align-items: center; gap: 12px; }
-
 .toolbar-toggle {
   background: none;
   border: none;
@@ -150,14 +151,11 @@ body {
   cursor: pointer;
   padding: 4px;
 }
-
 .toolbar-title {
   font-size: 0.95em;
   font-weight: 600;
 }
-
 .toolbar-right { display: flex; align-items: center; gap: 8px; }
-
 .toolbar-btn {
   background: none;
   border: none;
@@ -167,8 +165,26 @@ body {
   padding: 6px;
   border-radius: 6px;
   transition: all 0.2s;
+  position: relative;
 }
-.toolbar-btn:hover { color: var(--text-primary); background: rgba(255,255,255,0.05); }
+.toolbar-btn:hover { color: var(--text-primary); background: var(--hover); }
+
+.theme-flash {
+  position: absolute;
+  bottom: -22px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.7em;
+  white-space: nowrap;
+  background: var(--sidebar-bg);
+  border: 1px solid var(--card-border);
+  padding: 2px 6px;
+  border-radius: 4px;
+  pointer-events: none;
+  animation: flashFade 1.5s ease forwards;
+  z-index: 10;
+}
+@keyframes flashFade { 0% { opacity: 1; } 70% { opacity: 1; } 100% { opacity: 0; } }
 
 /* Messages Area */
 .messages-area {
@@ -179,7 +195,6 @@ body {
   flex-direction: column;
   gap: 12px;
 }
-
 .chat-placeholder {
   color: var(--text-secondary);
   font-size: 1em;
@@ -189,7 +204,7 @@ body {
 }
 
 /* Message styles */
-.msg-wrapper { display: flex; flex-direction: column; }
+.msg-wrapper { display: flex; flex-direction: column; position: relative; }
 .msg-wrapper.user { align-self: flex-end; max-width: 75%; }
 .msg-wrapper.assistant { align-self: flex-start; max-width: 75%; }
 
@@ -200,13 +215,11 @@ body {
   line-height: 1.6;
   word-wrap: break-word;
 }
-
 .msg-bubble.user {
   background: var(--msg-user);
   color: white;
   border-bottom-right-radius: 4px;
 }
-
 .msg-bubble.assistant {
   background: var(--msg-assistant);
   color: var(--text-primary);
@@ -226,20 +239,95 @@ body {
 .msg-bubble h3 { font-size: 1.05em; }
 .msg-bubble table { border-collapse: collapse; margin: 6px 0; font-size: 0.95em; }
 .msg-bubble th, .msg-bubble td { border: 1px solid var(--card-border); padding: 4px 8px; }
-.msg-bubble th { background: rgba(255,255,255,0.05); }
+.msg-bubble th { background: var(--hover); }
 .msg-bubble img.chat-inline-img { max-width: 300px; max-height: 300px; border-radius: 8px; margin-top: 6px; display: block; }
+
+/* Code copy button */
+.code-block-wrapper { position: relative; }
+.code-copy-btn {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  padding: 3px 8px;
+  font-size: 0.75em;
+  font-family: inherit;
+  background: rgba(255,255,255,0.15);
+  border: none;
+  border-radius: 4px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.2s, background 0.2s;
+}
+.code-block-wrapper:hover .code-copy-btn { opacity: 1; }
+.code-copy-btn:hover { background: rgba(255,255,255,0.25); color: var(--text-primary); }
+
+/* Message actions */
+.msg-actions {
+  display: none;
+  gap: 4px;
+  margin-top: 4px;
+}
+.msg-wrapper:hover .msg-actions { display: flex; }
+.msg-action-btn {
+  padding: 3px 8px;
+  font-size: 0.75em;
+  font-family: inherit;
+  background: var(--hover);
+  border: 1px solid var(--card-border);
+  border-radius: 4px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.msg-action-btn:hover { background: rgba(255,255,255,0.1); color: var(--text-primary); }
+
+/* Message edit mode */
+.msg-edit-textarea {
+  width: 100%;
+  min-height: 60px;
+  padding: 10px;
+  font-family: inherit;
+  font-size: 0.95em;
+  background: var(--hover);
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  color: var(--text-primary);
+  resize: vertical;
+  outline: none;
+  margin-top: 8px;
+  line-height: 1.5;
+}
+.msg-edit-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+.msg-edit-actions button {
+  padding: 6px 14px;
+  border: none;
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 0.8em;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.msg-edit-save { background: var(--accent); color: white; }
+.msg-edit-save:hover { background: var(--accent-hover); }
+.msg-edit-cancel { background: var(--hover); color: var(--text-primary); border: 1px solid var(--card-border) !important; }
+.msg-edit-cancel:hover { background: rgba(255,255,255,0.1); }
 
 /* Swipe controls */
 .swipe-controls { display: none; flex-direction: row; align-items: center; gap: 8px; margin-top: 6px; font-size: 0.8em; color: var(--text-secondary); }
 .msg-wrapper.assistant:last-child .swipe-controls.has-swipes { display: flex; }
-.swipe-controls button { background: rgba(255,255,255,0.1); border: none; color: var(--text-secondary); padding: 3px 10px; border-radius: 6px; cursor: pointer; }
-.swipe-controls button:hover { background: rgba(255,255,255,0.2); color: var(--text-primary); }
+.swipe-controls button { background: var(--hover); border: none; color: var(--text-secondary); padding: 3px 10px; border-radius: 6px; cursor: pointer; }
+.swipe-controls button:hover { background: rgba(255,255,255,0.1); color: var(--text-primary); }
 .swipe-controls button:disabled { opacity: 0.3; cursor: not-allowed; }
 
 /* Regenerate button */
-.regen-btn { display: none; background: rgba(255,255,255,0.08); border: none; color: var(--text-secondary); padding: 6px 14px; border-radius: 8px; cursor: pointer; font-size: 0.8em; margin-top: 6px; transition: all 0.2s; align-self: flex-start; font-family: inherit; }
+.regen-btn { display: none; background: var(--hover); border: none; color: var(--text-secondary); padding: 6px 14px; border-radius: 8px; cursor: pointer; font-size: 0.8em; margin-top: 6px; transition: all 0.2s; align-self: flex-start; font-family: inherit; }
 .msg-wrapper.assistant:last-child .regen-btn { display: inline-block; }
-.regen-btn:hover { background: rgba(255,255,255,0.15); color: var(--text-primary); }
+.regen-btn:hover { background: rgba(255,255,255,0.1); color: var(--text-primary); }
 
 /* Input Footer */
 .input-area {
@@ -247,7 +335,6 @@ body {
   border-top: 1px solid var(--card-border);
   background: var(--sidebar-bg);
 }
-
 .image-preview { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
 .image-preview:empty { display: none; }
 .img-thumb { position: relative; width: 56px; height: 56px; border-radius: 8px; overflow: hidden; flex-shrink: 0; }
@@ -255,13 +342,12 @@ body {
 .img-thumb .remove-thumb { position: absolute; top: -2px; right: -2px; background: #ef4444; border: none; color: white; width: 18px; height: 18px; border-radius: 50%; font-size: 11px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
 
 .input-row { display: flex; gap: 8px; align-items: flex-end; }
-
 .input-row textarea {
   flex: 1;
   padding: 10px 14px;
   font-size: 0.95em;
   font-family: inherit;
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--hover);
   border: 2px solid rgba(255, 255, 255, 0.1);
   border-radius: 12px;
   color: var(--text-primary);
@@ -309,7 +395,7 @@ body {
 
 .token-info { font-size: 0.75em; color: var(--text-secondary); text-align: right; margin-top: 6px; min-height: 1em; }
 
-/* Setup Modal */
+/* Modals */
 .modal-overlay {
   position: fixed;
   inset: 0;
@@ -328,29 +414,26 @@ body {
   border-radius: 16px;
   padding: 28px;
   width: 90%;
-  max-width: 480px;
+  max-width: 520px;
   max-height: 90vh;
   overflow-y: auto;
 }
-
 .modal h2 {
   font-size: 1.2em;
   margin-bottom: 20px;
 }
-
 .modal label {
   display: block;
   font-size: 0.85em;
   color: var(--text-secondary);
   margin-bottom: 4px;
 }
-
-.modal input, .modal textarea {
+.modal input, .modal textarea, .modal select {
   width: 100%;
   padding: 12px;
   font-family: inherit;
   font-size: 0.9em;
-  background: rgba(255,255,255,0.05);
+  background: var(--hover);
   border: 1px solid var(--card-border);
   border-radius: 8px;
   color: var(--text-primary);
@@ -358,15 +441,15 @@ body {
   outline: none;
   transition: border-color 0.2s;
 }
-.modal input:focus, .modal textarea:focus { border-color: var(--accent); }
+.modal input:focus, .modal textarea:focus, .modal select:focus { border-color: var(--accent); }
 .modal textarea { resize: vertical; min-height: 60px; max-height: 120px; }
+.modal select option { background: var(--sidebar-bg); color: var(--text-primary); }
 
 .modal .modal-actions {
   display: flex;
   gap: 10px;
   margin-top: 8px;
 }
-
 .modal .btn {
   flex: 1;
   padding: 12px;
@@ -380,8 +463,70 @@ body {
 }
 .modal .btn-primary { background: var(--accent); color: white; }
 .modal .btn-primary:hover { background: var(--accent-hover); }
-.modal .btn-secondary { background: rgba(255,255,255,0.1); color: var(--text-primary); }
-.modal .btn-secondary:hover { background: rgba(255,255,255,0.15); }
+.modal .btn-secondary { background: var(--hover); color: var(--text-primary); }
+.modal .btn-secondary:hover { background: rgba(255,255,255,0.1); }
+
+.modal .invalid { border-color: #ef4444 !important; }
+
+/* Model selector row */
+.model-selector-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+.model-selector-row select {
+  flex: 1;
+  margin-bottom: 0;
+}
+.model-refresh-btn {
+  padding: 8px 12px;
+  background: var(--hover);
+  border: 1px solid var(--card-border);
+  border-radius: 8px;
+  color: var(--text-primary);
+  cursor: pointer;
+  font-size: 16px;
+  transition: background 0.2s;
+  flex-shrink: 0;
+}
+.model-refresh-btn:hover { background: rgba(255,255,255,0.1); }
+
+/* Theme color pickers */
+.theme-colors {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.theme-color-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.8em;
+  color: var(--text-secondary);
+}
+.theme-color-item input[type="color"] {
+  width: 32px;
+  height: 28px;
+  border: 1px solid var(--card-border);
+  border-radius: 4px;
+  background: none;
+  cursor: pointer;
+  padding: 0;
+}
+
+/* Section dividers in settings */
+.modal-section {
+  font-size: 0.8em;
+  font-weight: 600;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 18px 0 10px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--card-border);
+}
+.modal-section:first-of-type { margin-top: 0; }
 
 /* Responsive */
 @media (max-width: 768px) {
@@ -416,6 +561,9 @@ body {
   <div class="sidebar-header">
     <button onclick="createConversation()">+ New Chat</button>
   </div>
+  <div class="sidebar-search">
+    <input type="text" id="sidebarSearch" placeholder="Search conversations..." oninput="filterConversations()">
+  </div>
   <div class="conv-list" id="convList"></div>
 </div>
 
@@ -429,11 +577,12 @@ body {
     </div>
     <div class="toolbar-right">
       <button class="toolbar-btn" onclick="exportConversation()" title="Export chat">&#8615;</button>
+      <button class="toolbar-btn" onclick="exportAllConversations()" title="Export all conversations">&#8659;</button>
       <button class="toolbar-btn" onclick="document.getElementById('importInput').click()" title="Import chat">&#8613;</button>
       <input type="file" id="importInput" accept=".json" style="display:none" onchange="importConversation(event)">
       <button class="toolbar-btn" onclick="clearChat()" title="Clear chat">&#128465;</button>
       <button class="toolbar-btn" onclick="openSettings()" title="Settings">&#9881;</button>
-      <button class="toolbar-btn" id="themeToggle" onclick="toggleTheme()" title="Toggle theme">&#9790;</button>
+      <button class="toolbar-btn" id="themeToggle" onclick="toggleTheme()" title="Theme: dark">&#9790;</button>
     </div>
   </div>
 
@@ -461,12 +610,16 @@ body {
   <div class="modal">
     <h2>Welcome to AI Assistant</h2>
     <p style="color:var(--text-secondary);font-size:0.9em;margin-bottom:20px">Enter your API settings to get started. Your keys are stored locally and never sent to any server except your configured proxy.</p>
-    <label>Proxy URL</label>
-    <input type="text" id="setupProxy" placeholder="https://your-proxy.com/v1/chat/completions">
+    <label>Base URL</label>
+    <input type="text" id="setupProxy" placeholder="https://api.openai.com/v1">
     <label>API Key</label>
     <input type="password" id="setupKey" placeholder="sk-...">
     <label>Model</label>
-    <input type="text" id="setupModel" placeholder="gpt-4o" value="gpt-4o">
+    <div class="model-selector-row">
+      <select id="setupModelSelect"><option value="">-- Fetch models first --</option></select>
+      <button class="model-refresh-btn" onclick="refreshModels('setup')" title="Refresh model list">&#x1F504;</button>
+    </div>
+    <input type="text" id="setupModelManual" placeholder="Or type model name manually" value="gpt-4o">
     <div class="modal-actions">
       <button class="btn btn-primary" onclick="saveSetup()">Get Started</button>
     </div>
@@ -477,20 +630,72 @@ body {
 <div class="modal-overlay" id="settingsModal">
   <div class="modal">
     <h2>Settings</h2>
-    <label>Proxy URL</label>
-    <input type="text" id="setProxy">
+
+    <div class="modal-section">API Configuration</div>
+    <label>Base URL</label>
+    <input type="text" id="setProxy" placeholder="https://api.openai.com/v1">
     <label>API Key</label>
     <input type="password" id="setKey">
     <label>Model</label>
-    <input type="text" id="setModel">
+    <div class="model-selector-row">
+      <select id="setModelSelect"><option value="">-- Fetch models first --</option></select>
+      <button class="model-refresh-btn" onclick="refreshModels('settings')" title="Refresh model list">&#x1F504;</button>
+    </div>
+    <input type="text" id="setModelManual" placeholder="Or type model name manually">
+    <label>API Format</label>
+    <select id="setApiFormat">
+      <option value="auto">Auto-detect</option>
+      <option value="openai">OpenAI</option>
+      <option value="anthropic">Anthropic</option>
+    </select>
+
+    <div class="modal-section">Prompts</div>
     <label>System Prompt</label>
     <input type="text" id="setSystemPrompt" placeholder="You are a helpful assistant.">
     <label>Persona (optional)</label>
     <textarea id="setPersona" placeholder="Describe yourself so the AI can personalize responses..."></textarea>
+
+    <div class="modal-section">Request Parameters</div>
+    <label>Extra Parameters (JSON)</label>
+    <textarea id="setExtraParams" placeholder='{"temperature": 0.7, "max_tokens": 4096}'></textarea>
+    <label>Exclude Parameters (comma-separated)</label>
+    <input type="text" id="setExcludeParams" placeholder="e.g. stream,model">
+
+    <div class="modal-section">Appearance</div>
+    <label>Theme</label>
+    <select id="setTheme" onchange="onThemeSelectChange()">
+      <option value="dark">Dark</option>
+      <option value="light">Light</option>
+      <option value="nord">Nord</option>
+      <option value="catppuccin">Catppuccin</option>
+      <option value="dracula">Dracula</option>
+      <option value="gruvbox">Gruvbox</option>
+      <option value="tokyonight">Tokyo Night</option>
+      <option value="solarized">Solarized</option>
+      <option value="onedark">One Dark</option>
+      <option value="rosepine">Rose Pine</option>
+      <option value="custom">Custom</option>
+    </select>
+    <div class="theme-colors" id="customThemeColors" style="display:none">
+      <div class="theme-color-item"><input type="color" id="cBg" oninput="liveCustomTheme()"><span>Background</span></div>
+      <div class="theme-color-item"><input type="color" id="cSidebar" oninput="liveCustomTheme()"><span>Sidebar</span></div>
+      <div class="theme-color-item"><input type="color" id="cBorder" oninput="liveCustomTheme()"><span>Border</span></div>
+      <div class="theme-color-item"><input type="color" id="cText" oninput="liveCustomTheme()"><span>Text</span></div>
+      <div class="theme-color-item"><input type="color" id="cTextSec" oninput="liveCustomTheme()"><span>Text Secondary</span></div>
+      <div class="theme-color-item"><input type="color" id="cAccent" oninput="liveCustomTheme()"><span>Accent</span></div>
+      <div class="theme-color-item"><input type="color" id="cAccentHover" oninput="liveCustomTheme()"><span>Accent Hover</span></div>
+      <div class="theme-color-item"><input type="color" id="cMsgUser" oninput="liveCustomTheme()"><span>User Bubble</span></div>
+      <div class="theme-color-item"><input type="color" id="cMsgAssistant" oninput="liveCustomTheme()"><span>Assistant Bubble</span></div>
+    </div>
+    <label>Font</label>
+    <input type="text" id="setFont" placeholder="e.g. Inter, Poppins, JetBrains Mono">
+
+    <div class="modal-section">Cost Tracking</div>
     <label>Input Cost per 1M tokens</label>
     <input type="number" id="setInputCost" step="0.01" placeholder="e.g. 2.50">
     <label>Output Cost per 1M tokens</label>
     <input type="number" id="setOutputCost" step="0.01" placeholder="e.g. 10.00">
+
     <div class="modal-actions">
       <button class="btn btn-secondary" onclick="closeSettings()">Cancel</button>
       <button class="btn btn-primary" onclick="saveSettings()">Save</button>
@@ -511,11 +716,300 @@ let pendingImages = [];
 let voiceRec = null;
 
 // ============================================
+// Theme Presets
+// ============================================
+const themePresets = {
+  dark:       { bg:'#0a0a0f', sidebar:'#14141a', cardBorder:'rgba(255,255,255,0.08)', textPrimary:'rgba(255,255,255,0.95)', textSecondary:'rgba(255,255,255,0.6)', accent:'#6366f1', accentHover:'#818cf8', msgUser:'#6366f1', msgAssistant:'rgba(255,255,255,0.08)' },
+  light:      { bg:'#f5f5f7', sidebar:'#eeeef2', cardBorder:'rgba(0,0,0,0.1)', textPrimary:'rgba(0,0,0,0.9)', textSecondary:'rgba(0,0,0,0.5)', accent:'#6366f1', accentHover:'#818cf8', msgUser:'#6366f1', msgAssistant:'rgba(0,0,0,0.05)' },
+  nord:       { bg:'#2e3440', sidebar:'#3b4252', cardBorder:'#434c5e', textPrimary:'#eceff4', textSecondary:'#d8dee9', accent:'#88c0d0', accentHover:'#8fbcbb', msgUser:'#5e81ac', msgAssistant:'#3b4252' },
+  catppuccin: { bg:'#1e1e2e', sidebar:'#313244', cardBorder:'#45475a', textPrimary:'#cdd6f4', textSecondary:'#a6adc8', accent:'#cba6f7', accentHover:'#b4befe', msgUser:'#cba6f7', msgAssistant:'#313244' },
+  dracula:    { bg:'#282a36', sidebar:'#44475a', cardBorder:'#6272a4', textPrimary:'#f8f8f2', textSecondary:'#bd93f9', accent:'#bd93f9', accentHover:'#ff79c6', msgUser:'#bd93f9', msgAssistant:'#44475a' },
+  gruvbox:    { bg:'#282828', sidebar:'#3c3836', cardBorder:'#504945', textPrimary:'#ebdbb2', textSecondary:'#a89984', accent:'#fabd2f', accentHover:'#fe8019', msgUser:'#fabd2f', msgAssistant:'#3c3836' },
+  tokyonight: { bg:'#1a1b26', sidebar:'#24283b', cardBorder:'#414868', textPrimary:'#c0caf5', textSecondary:'#565f89', accent:'#7aa2f7', accentHover:'#bb9af7', msgUser:'#7aa2f7', msgAssistant:'#24283b' },
+  solarized:  { bg:'#002b36', sidebar:'#073642', cardBorder:'#586e75', textPrimary:'#fdf6e3', textSecondary:'#93a1a1', accent:'#268bd2', accentHover:'#2aa198', msgUser:'#268bd2', msgAssistant:'#073642' },
+  onedark:    { bg:'#282c34', sidebar:'#21252b', cardBorder:'#3e4451', textPrimary:'#abb2bf', textSecondary:'#5c6370', accent:'#61afef', accentHover:'#c678dd', msgUser:'#61afef', msgAssistant:'#2c313c' },
+  rosepine:   { bg:'#191724', sidebar:'#1f1d2e', cardBorder:'#26233a', textPrimary:'#e0def4', textSecondary:'#908caa', accent:'#c4a7e7', accentHover:'#ebbcba', msgUser:'#c4a7e7', msgAssistant:'#1f1d2e' }
+};
+
+const themeOrder = ['dark','light','nord','catppuccin','dracula','gruvbox','tokyonight','solarized','onedark','rosepine'];
+
+// ============================================
+// Utility
+// ============================================
+function isLightColor(color) {
+  let hex = color;
+  if (hex.startsWith('rgba') || hex.startsWith('rgb')) {
+    const m = hex.match(/[\d.]+/g);
+    if (m) return (parseFloat(m[0]) * 299 + parseFloat(m[1]) * 587 + parseFloat(m[2]) * 114) / 1000 > 128;
+    return false;
+  }
+  if (hex.startsWith('#')) {
+    hex = hex.slice(1);
+    if (hex.length === 3) hex = hex[0]+hex[0]+hex[1]+hex[1]+hex[2]+hex[2];
+    const r = parseInt(hex.slice(0,2), 16), g = parseInt(hex.slice(2,4), 16), b = parseInt(hex.slice(4,6), 16);
+    return (r * 299 + g * 587 + b * 114) / 1000 > 128;
+  }
+  return false;
+}
+
+// ============================================
+// Theme System
+// ============================================
+function applyTheme(name) {
+  let t;
+  if (name === 'custom') {
+    try { t = JSON.parse(localStorage.getItem('assistantCustomTheme') || 'null'); } catch(e) {}
+    if (!t) t = themePresets.dark;
+  } else {
+    t = themePresets[name] || themePresets.dark;
+  }
+  const s = document.documentElement.style;
+  s.setProperty('--bg', t.bg);
+  s.setProperty('--sidebar-bg', t.sidebar);
+  s.setProperty('--card-border', t.cardBorder);
+  s.setProperty('--text-primary', t.textPrimary);
+  s.setProperty('--text-secondary', t.textSecondary);
+  s.setProperty('--accent', t.accent);
+  s.setProperty('--accent-hover', t.accentHover);
+  s.setProperty('--msg-user', t.msgUser);
+  s.setProperty('--msg-assistant', t.msgAssistant);
+  s.setProperty('--hover', isLightColor(t.bg) ? 'rgba(0,0,0,0.05)' : 'rgba(255,255,255,0.05)');
+  localStorage.setItem('assistantTheme', name);
+
+  const btn = document.getElementById('themeToggle');
+  if (btn) {
+    btn.innerHTML = isLightColor(t.bg) ? '&#9728;' : '&#9790;';
+    btn.title = 'Theme: ' + name;
+  }
+}
+
+function toggleTheme() {
+  const current = localStorage.getItem('assistantTheme') || 'dark';
+  let order = [...themeOrder];
+  const hasCustom = localStorage.getItem('assistantCustomTheme');
+  if (hasCustom) order.push('custom');
+  let idx = order.indexOf(current);
+  const next = order[(idx + 1) % order.length];
+  applyTheme(next);
+
+  // Flash theme name
+  const btn = document.getElementById('themeToggle');
+  const old = btn.querySelector('.theme-flash');
+  if (old) old.remove();
+  const flash = document.createElement('span');
+  flash.className = 'theme-flash';
+  flash.textContent = next;
+  btn.appendChild(flash);
+  setTimeout(() => flash.remove(), 1600);
+}
+
+function loadTheme() {
+  const name = localStorage.getItem('assistantTheme') || 'dark';
+  applyTheme(name);
+}
+
+// ============================================
+// Custom Theme Helpers
+// ============================================
+function onThemeSelectChange() {
+  const val = document.getElementById('setTheme').value;
+  document.getElementById('customThemeColors').style.display = val === 'custom' ? 'grid' : 'none';
+  if (val === 'custom') {
+    loadCustomColorPickers();
+  }
+  applyTheme(val);
+}
+
+function loadCustomColorPickers() {
+  let t;
+  try { t = JSON.parse(localStorage.getItem('assistantCustomTheme') || 'null'); } catch(e) {}
+  if (!t) t = themePresets.dark;
+  const toHex = (c) => {
+    if (c.startsWith('#') && c.length >= 7) return c.slice(0, 7);
+    if (c.startsWith('#') && c.length === 4) return '#' + c[1]+c[1]+c[2]+c[2]+c[3]+c[3];
+    if (c.startsWith('rgba') || c.startsWith('rgb')) {
+      const m = c.match(/[\d.]+/g);
+      if (m) return '#' + [m[0],m[1],m[2]].map(v => Math.round(parseFloat(v)).toString(16).padStart(2,'0')).join('');
+    }
+    return '#000000';
+  };
+  document.getElementById('cBg').value = toHex(t.bg);
+  document.getElementById('cSidebar').value = toHex(t.sidebar);
+  document.getElementById('cBorder').value = toHex(t.cardBorder);
+  document.getElementById('cText').value = toHex(t.textPrimary);
+  document.getElementById('cTextSec').value = toHex(t.textSecondary);
+  document.getElementById('cAccent').value = toHex(t.accent);
+  document.getElementById('cAccentHover').value = toHex(t.accentHover);
+  document.getElementById('cMsgUser').value = toHex(t.msgUser);
+  document.getElementById('cMsgAssistant').value = toHex(t.msgAssistant);
+}
+
+function getCustomThemeFromPickers() {
+  return {
+    bg: document.getElementById('cBg').value,
+    sidebar: document.getElementById('cSidebar').value,
+    cardBorder: document.getElementById('cBorder').value,
+    textPrimary: document.getElementById('cText').value,
+    textSecondary: document.getElementById('cTextSec').value,
+    accent: document.getElementById('cAccent').value,
+    accentHover: document.getElementById('cAccentHover').value,
+    msgUser: document.getElementById('cMsgUser').value,
+    msgAssistant: document.getElementById('cMsgAssistant').value
+  };
+}
+
+function liveCustomTheme() {
+  const t = getCustomThemeFromPickers();
+  localStorage.setItem('assistantCustomTheme', JSON.stringify(t));
+  applyTheme('custom');
+}
+
+// ============================================
+// Custom Google Fonts
+// ============================================
+function loadCustomFont(fontName) {
+  const old = document.getElementById('customFontLink');
+  if (old) old.remove();
+  if (!fontName) {
+    document.body.style.fontFamily = "'Figtree', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
+    return;
+  }
+  const link = document.createElement('link');
+  link.id = 'customFontLink';
+  link.rel = 'stylesheet';
+  link.href = 'https://fonts.googleapis.com/css2?family=' + fontName.replace(/ /g, '+') + ':wght@400;500;600;700&display=swap';
+  document.head.appendChild(link);
+  document.body.style.fontFamily = "'" + fontName + "', 'Figtree', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
+}
+
+// ============================================
+// Model Fetching
+// ============================================
+async function fetchAvailableModels(baseUrl, apiKey) {
+  const url = baseUrl.replace(/\/+$/, '') + '/models';
+  const resp = await fetch(url, {
+    headers: { 'Authorization': 'Bearer ' + apiKey }
+  });
+  if (!resp.ok) throw new Error('HTTP ' + resp.status);
+  const data = await resp.json();
+  return data.data?.map(m => m.id) || [];
+}
+
+function populateModelSelect(target, models) {
+  const select = document.getElementById(target === 'setup' ? 'setupModelSelect' : 'setModelSelect');
+  const currentModel = localStorage.getItem('llmModel') || '';
+  select.innerHTML = '<option value="">-- Select a model --</option>';
+  models.sort().forEach(m => {
+    const opt = document.createElement('option');
+    opt.value = m;
+    opt.textContent = m;
+    if (m === currentModel) opt.selected = true;
+    select.appendChild(opt);
+  });
+}
+
+async function refreshModels(target) {
+  const proxyInput = document.getElementById(target === 'setup' ? 'setupProxy' : 'setProxy');
+  const keyInput = document.getElementById(target === 'setup' ? 'setupKey' : 'setKey');
+  let baseUrl = proxyInput.value.trim().replace(/\/(chat\/completions|messages)\/?$/, '');
+  const apiKey = keyInput.value.trim();
+  if (!baseUrl || !apiKey) { alert('Enter Base URL and API Key first.'); return; }
+  const btn = event.target;
+  btn.textContent = '...';
+  btn.disabled = true;
+  try {
+    const models = await fetchAvailableModels(baseUrl, apiKey);
+    localStorage.setItem('llmModelList', JSON.stringify(models));
+    populateModelSelect(target, models);
+  } catch (e) {
+    alert('Failed to fetch models: ' + e.message);
+  } finally {
+    btn.textContent = '\u{1F504}';
+    btn.disabled = false;
+  }
+}
+
+function loadCachedModels(target) {
+  try {
+    const cached = JSON.parse(localStorage.getItem('llmModelList') || '[]');
+    if (cached.length > 0) populateModelSelect(target, cached);
+  } catch(e) {}
+}
+
+// ============================================
+// API Format Detection
+// ============================================
+function detectApiFormat(model) {
+  const fmt = localStorage.getItem('llmApiFormat') || 'auto';
+  if (fmt !== 'auto') return fmt;
+  if (/^claude/i.test(model)) return 'anthropic';
+  return 'openai';
+}
+
+// ============================================
+// Anthropic Message Conversion
+// ============================================
+function prepareAnthropicMessages(apiMessages) {
+  let systemText = '';
+  const msgs = [];
+  for (const m of apiMessages) {
+    if (m.role === 'system') {
+      const txt = typeof m.content === 'string' ? m.content : '';
+      systemText += (systemText ? '\n\n' : '') + txt;
+    } else {
+      msgs.push({ role: m.role, content: m.content });
+    }
+  }
+  // Merge consecutive same-role messages
+  const merged = [];
+  for (const m of msgs) {
+    if (merged.length > 0 && merged[merged.length - 1].role === m.role) {
+      const prev = merged[merged.length - 1];
+      const prevText = typeof prev.content === 'string' ? prev.content : JSON.stringify(prev.content);
+      const curText = typeof m.content === 'string' ? m.content : JSON.stringify(m.content);
+      prev.content = prevText + '\n\n' + curText;
+    } else {
+      merged.push({ role: m.role, content: m.content });
+    }
+  }
+  // Convert image content for Anthropic format
+  const converted = merged.map(m => {
+    if (Array.isArray(m.content)) {
+      const parts = m.content.map(part => {
+        if (part.type === 'text') return { type: 'text', text: part.text };
+        if (part.type === 'image_url') {
+          const url = part.image_url.url;
+          if (url.startsWith('data:')) {
+            const match = url.match(/^data:(image\/[^;]+);base64,(.+)$/);
+            if (match) return { type: 'image', source: { type: 'base64', media_type: match[1], data: match[2] } };
+          }
+          return { type: 'image', source: { type: 'url', url: url } };
+        }
+        return part;
+      });
+      return { role: m.role, content: parts };
+    }
+    return m;
+  });
+  return { system: systemText, messages: converted };
+}
+
+// ============================================
 // Initialization
 // ============================================
 document.addEventListener('DOMContentLoaded', () => {
+  // Migration: strip endpoint suffix from proxy URL
+  const storedUrl = localStorage.getItem('llmProxyUrl');
+  if (storedUrl) {
+    const cleaned = storedUrl.replace(/\/(chat\/completions|messages)\/?$/, '');
+    if (cleaned !== storedUrl) localStorage.setItem('llmProxyUrl', cleaned);
+  }
+
   loadConversations();
   loadTheme();
+  loadCustomFont(localStorage.getItem('assistantFont') || '');
+  loadCachedModels('setup');
+  loadCachedModels('settings');
 
   // Show setup modal if no API key
   if (!localStorage.getItem('llmProxyUrl') || !localStorage.getItem('llmApiKey')) {
@@ -527,14 +1021,15 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('voiceBtn').style.display = 'none';
   }
 
-  // Auto-resize textarea
+  // Auto-resize textarea + character count
   const ta = document.getElementById('chatInput');
   ta.addEventListener('input', () => {
     ta.style.height = 'auto';
     ta.style.height = Math.min(ta.scrollHeight, 150) + 'px';
+    updateTokenInfo();
   });
 
-  // Keyboard shortcuts
+  // Send on Enter
   ta.addEventListener('keydown', (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
@@ -542,10 +1037,35 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
+  // Global keyboard shortcuts
   document.addEventListener('keydown', (e) => {
+    // Escape - close modals / stop streaming
     if (e.key === 'Escape') {
       if (streaming && abortController) abortController.abort();
       document.getElementById('settingsModal').classList.remove('open');
+      document.getElementById('setupModal').classList.remove('open');
+    }
+    // Ctrl+N - new conversation
+    if (e.ctrlKey && e.key === 'n') {
+      e.preventDefault();
+      createConversation();
+    }
+    // Ctrl+/ - focus input
+    if (e.ctrlKey && e.key === '/') {
+      e.preventDefault();
+      document.getElementById('chatInput').focus();
+    }
+    // Ctrl+K - focus sidebar search
+    if (e.ctrlKey && e.key === 'k') {
+      e.preventDefault();
+      const sb = document.getElementById('sidebar');
+      if (sb.classList.contains('collapsed')) toggleSidebar();
+      document.getElementById('sidebarSearch').focus();
+    }
+    // Ctrl+Shift+E - export all
+    if (e.ctrlKey && e.shiftKey && e.key === 'E') {
+      e.preventDefault();
+      exportAllConversations();
     }
   });
 
@@ -601,6 +1121,30 @@ function renderMarkdown(text) {
 }
 
 // ============================================
+// Code Copy Buttons
+// ============================================
+function addCodeCopyButtons(container) {
+  container.querySelectorAll('pre').forEach(pre => {
+    if (pre.parentElement.classList.contains('code-block-wrapper')) return;
+    const wrapper = document.createElement('div');
+    wrapper.className = 'code-block-wrapper';
+    pre.parentNode.insertBefore(wrapper, pre);
+    wrapper.appendChild(pre);
+    const btn = document.createElement('button');
+    btn.className = 'code-copy-btn';
+    btn.textContent = 'Copy';
+    btn.onclick = (e) => {
+      e.stopPropagation();
+      const code = pre.querySelector('code');
+      navigator.clipboard.writeText(code ? code.textContent : pre.textContent);
+      btn.textContent = 'Copied!';
+      setTimeout(() => btn.textContent = 'Copy', 2000);
+    };
+    wrapper.appendChild(btn);
+  });
+}
+
+// ============================================
 // Token Estimation
 // ============================================
 function estimateTokens(text) {
@@ -616,20 +1160,33 @@ function getMsgText(msg) {
 
 function updateTokenInfo() {
   const el = document.getElementById('tokenInfo');
+  const inputText = document.getElementById('chatInput').value;
+  const inputChars = inputText.length;
+
+  const parts = [];
+  if (inputChars > 0) {
+    const inputTokens = estimateTokens(inputText);
+    parts.push(inputChars + ' chars');
+    parts.push('~' + (inputTokens > 999 ? (inputTokens / 1000).toFixed(1) + 'k' : inputTokens) + ' tokens');
+  }
+
   let total = 0;
   messages.forEach(m => { total += estimateTokens(getMsgText(m)); });
+  if (total > 0 || messages.length > 0) {
+    parts.push('Conv: ~' + (total > 999 ? (total / 1000).toFixed(1) + 'k' : total) + ' tokens');
+  }
+
   const inputCost = parseFloat(localStorage.getItem('llmInputCost') || '0');
   const outputCost = parseFloat(localStorage.getItem('llmOutputCost') || '0');
-  let display = '~' + (total > 999 ? (total / 1000).toFixed(1) + 'k' : total) + ' tokens';
-  if (inputCost > 0 || outputCost > 0) {
+  if ((inputCost > 0 || outputCost > 0) && total > 0) {
     let cost = 0;
     messages.forEach(m => {
       const t = estimateTokens(getMsgText(m));
       cost += t * ((m.role === 'assistant' ? outputCost : inputCost) / 1000000);
     });
-    display += ' / ~$' + cost.toFixed(4);
+    parts.push('~$' + cost.toFixed(4));
   }
-  el.textContent = display;
+  el.textContent = parts.join(' | ');
 }
 
 // ============================================
@@ -731,6 +1288,20 @@ function renderSidebar() {
     div.appendChild(del);
     list.appendChild(div);
   });
+  filterConversations();
+}
+
+// ============================================
+// Sidebar Search
+// ============================================
+function filterConversations() {
+  const searchEl = document.getElementById('sidebarSearch');
+  const query = searchEl ? searchEl.value.toLowerCase() : '';
+  const items = document.querySelectorAll('.conv-item');
+  items.forEach(item => {
+    const title = item.querySelector('.conv-title').textContent.toLowerCase();
+    item.style.display = (!query || title.includes(query)) ? '' : 'none';
+  });
 }
 
 // ============================================
@@ -744,60 +1315,122 @@ function toggleSidebar() {
 }
 
 // ============================================
-// Theme
-// ============================================
-function loadTheme() {
-  const theme = localStorage.getItem('assistantTheme') || 'dark';
-  document.documentElement.setAttribute('data-theme', theme);
-  document.getElementById('themeToggle').innerHTML = theme === 'dark' ? '&#9790;' : '&#9728;';
-}
-
-function toggleTheme() {
-  const current = document.documentElement.getAttribute('data-theme') || 'dark';
-  const next = current === 'dark' ? 'light' : 'dark';
-  document.documentElement.setAttribute('data-theme', next);
-  localStorage.setItem('assistantTheme', next);
-  document.getElementById('themeToggle').innerHTML = next === 'dark' ? '&#9790;' : '&#9728;';
-}
-
-// ============================================
 // Setup & Settings
 // ============================================
+function getSelectedModel(target) {
+  const manualEl = document.getElementById(target === 'setup' ? 'setupModelManual' : 'setModelManual');
+  const selectEl = document.getElementById(target === 'setup' ? 'setupModelSelect' : 'setModelSelect');
+  const manual = manualEl.value.trim();
+  if (manual) return manual;
+  return selectEl.value || 'gpt-4o';
+}
+
 function saveSetup() {
-  const proxy = document.getElementById('setupProxy').value.trim();
+  let proxy = document.getElementById('setupProxy').value.trim();
   const key = document.getElementById('setupKey').value.trim();
-  const model = document.getElementById('setupModel').value.trim();
-  if (!proxy || !key) { alert('Proxy URL and API Key are required.'); return; }
+  if (!proxy || !key) { alert('Base URL and API Key are required.'); return; }
+  proxy = proxy.replace(/\/(chat\/completions|messages)\/?$/, '');
+  const model = getSelectedModel('setup');
   localStorage.setItem('llmProxyUrl', proxy);
   localStorage.setItem('llmApiKey', key);
-  localStorage.setItem('llmModel', model || 'gpt-4o');
+  localStorage.setItem('llmModel', model);
   document.getElementById('setupModal').classList.remove('open');
+  // Try to fetch models in the background
+  fetchAvailableModels(proxy, key).then(models => {
+    localStorage.setItem('llmModelList', JSON.stringify(models));
+    loadCachedModels('settings');
+  }).catch(() => {});
 }
 
 function openSettings() {
   document.getElementById('setProxy').value = localStorage.getItem('llmProxyUrl') || '';
   document.getElementById('setKey').value = localStorage.getItem('llmApiKey') || '';
-  document.getElementById('setModel').value = localStorage.getItem('llmModel') || '';
+  const currentModel = localStorage.getItem('llmModel') || '';
+  document.getElementById('setModelManual').value = currentModel;
+  document.getElementById('setApiFormat').value = localStorage.getItem('llmApiFormat') || 'auto';
   document.getElementById('setSystemPrompt').value = localStorage.getItem('llmSystemPrompt') || '';
   document.getElementById('setPersona').value = localStorage.getItem('llmPersona') || '';
+  document.getElementById('setExtraParams').value = localStorage.getItem('llmExtraParams') || '';
+  document.getElementById('setExcludeParams').value = localStorage.getItem('llmExcludeParams') || '';
   document.getElementById('setInputCost').value = localStorage.getItem('llmInputCost') || '';
   document.getElementById('setOutputCost').value = localStorage.getItem('llmOutputCost') || '';
+  document.getElementById('setFont').value = localStorage.getItem('assistantFont') || '';
+
+  // Theme
+  const currentTheme = localStorage.getItem('assistantTheme') || 'dark';
+  document.getElementById('setTheme').value = currentTheme;
+  document.getElementById('customThemeColors').style.display = currentTheme === 'custom' ? 'grid' : 'none';
+  if (currentTheme === 'custom') loadCustomColorPickers();
+
+  // Model select
+  loadCachedModels('settings');
+  const selectEl = document.getElementById('setModelSelect');
+  if (currentModel) {
+    for (const opt of selectEl.options) {
+      if (opt.value === currentModel) { opt.selected = true; break; }
+    }
+  }
+
   document.getElementById('settingsModal').classList.add('open');
 }
 
 function saveSettings() {
-  localStorage.setItem('llmProxyUrl', document.getElementById('setProxy').value.trim());
+  // Validate extra params JSON
+  const extraParamsField = document.getElementById('setExtraParams');
+  const extraParamsVal = extraParamsField.value.trim();
+  if (extraParamsVal) {
+    try {
+      JSON.parse(extraParamsVal);
+      extraParamsField.classList.remove('invalid');
+    } catch(e) {
+      extraParamsField.classList.add('invalid');
+      alert('Extra Parameters must be valid JSON.');
+      return;
+    }
+  } else {
+    extraParamsField.classList.remove('invalid');
+  }
+
+  let proxy = document.getElementById('setProxy').value.trim();
+  proxy = proxy.replace(/\/(chat\/completions|messages)\/?$/, '');
+  localStorage.setItem('llmProxyUrl', proxy);
   localStorage.setItem('llmApiKey', document.getElementById('setKey').value.trim());
-  localStorage.setItem('llmModel', document.getElementById('setModel').value.trim());
+  localStorage.setItem('llmModel', getSelectedModel('settings'));
+  localStorage.setItem('llmApiFormat', document.getElementById('setApiFormat').value);
   localStorage.setItem('llmSystemPrompt', document.getElementById('setSystemPrompt').value.trim());
   localStorage.setItem('llmPersona', document.getElementById('setPersona').value.trim());
+  localStorage.setItem('llmExtraParams', extraParamsVal);
+  localStorage.setItem('llmExcludeParams', document.getElementById('setExcludeParams').value.trim());
   localStorage.setItem('llmInputCost', document.getElementById('setInputCost').value.trim());
   localStorage.setItem('llmOutputCost', document.getElementById('setOutputCost').value.trim());
+
+  // Theme
+  const themeName = document.getElementById('setTheme').value;
+  if (themeName === 'custom') {
+    localStorage.setItem('assistantCustomTheme', JSON.stringify(getCustomThemeFromPickers()));
+  }
+  applyTheme(themeName);
+
+  // Font
+  const fontName = document.getElementById('setFont').value.trim();
+  localStorage.setItem('assistantFont', fontName);
+  loadCustomFont(fontName);
+
+  // Try to fetch models in background
+  const key = document.getElementById('setKey').value.trim();
+  if (proxy && key) {
+    fetchAvailableModels(proxy, key).then(models => {
+      localStorage.setItem('llmModelList', JSON.stringify(models));
+    }).catch(() => {});
+  }
+
   document.getElementById('settingsModal').classList.remove('open');
 }
 
 function closeSettings() {
   document.getElementById('settingsModal').classList.remove('open');
+  // Revert theme if user didn't save
+  loadTheme();
 }
 
 // ============================================
@@ -813,6 +1446,11 @@ function renderMessages() {
   }
 
   messages.forEach((msg, idx) => {
+    if (msg._editing) {
+      renderEditMode(area, msg, idx);
+      return;
+    }
+
     const wrapper = document.createElement('div');
     wrapper.className = 'msg-wrapper ' + msg.role;
 
@@ -838,11 +1476,48 @@ function renderMessages() {
       }
     } else if (msg.role === 'assistant') {
       bubble.innerHTML = renderMarkdown(msg.content);
+      addCodeCopyButtons(bubble);
     } else {
       bubble.textContent = msg.content;
     }
 
     wrapper.appendChild(bubble);
+
+    // Message actions
+    const actions = document.createElement('div');
+    actions.className = 'msg-actions';
+
+    const copyBtn = document.createElement('button');
+    copyBtn.className = 'msg-action-btn';
+    copyBtn.textContent = 'Copy';
+    copyBtn.onclick = () => {
+      navigator.clipboard.writeText(getMsgText(msg));
+      copyBtn.textContent = 'Copied!';
+      setTimeout(() => copyBtn.textContent = 'Copy', 1500);
+    };
+    actions.appendChild(copyBtn);
+
+    if (msg.role === 'user') {
+      const editBtn = document.createElement('button');
+      editBtn.className = 'msg-action-btn';
+      editBtn.textContent = 'Edit';
+      editBtn.onclick = () => { msg._editing = true; renderMessages(); };
+      actions.appendChild(editBtn);
+    }
+
+    const delBtn = document.createElement('button');
+    delBtn.className = 'msg-action-btn';
+    delBtn.textContent = 'Delete';
+    delBtn.onclick = () => {
+      if (msg.role === 'assistant' && !confirm('Delete this response?')) return;
+      messages.splice(idx, 1);
+      saveConversations();
+      renderMessages();
+      updateTokenInfo();
+    };
+    actions.appendChild(delBtn);
+
+    wrapper.appendChild(actions);
 
     if (msg.role === 'assistant') {
       // Swipe controls
@@ -876,6 +1551,74 @@ function renderMessages() {
   area.scrollTop = area.scrollHeight;
 }
 
+function renderEditMode(area, msg, idx) {
+  const wrapper = document.createElement('div');
+  wrapper.className = 'msg-wrapper user';
+
+  const ta = document.createElement('textarea');
+  ta.className = 'msg-edit-textarea';
+  ta.value = getMsgText(msg);
+  wrapper.appendChild(ta);
+
+  const editActions = document.createElement('div');
+  editActions.className = 'msg-edit-actions';
+
+  const cancelBtn = document.createElement('button');
+  cancelBtn.className = 'msg-edit-cancel';
+  cancelBtn.textContent = 'Cancel';
+  cancelBtn.onclick = () => { delete msg._editing; renderMessages(); };
+
+  const saveBtn = document.createElement('button');
+  saveBtn.className = 'msg-edit-save';
+  saveBtn.textContent = 'Save & Resend';
+  saveBtn.onclick = () => {
+    msg.content = ta.value;
+    delete msg._editing;
+    messages.length = idx + 1;
+    saveConversations();
+    renderMessages();
+    resendAfterEdit();
+  };
+
+  editActions.appendChild(cancelBtn);
+  editActions.appendChild(saveBtn);
+  wrapper.appendChild(editActions);
+  area.appendChild(wrapper);
+}
+
+async function resendAfterEdit() {
+  const proxyUrl = localStorage.getItem('llmProxyUrl');
+  const apiKey = localStorage.getItem('llmApiKey');
+  const systemPrompt = localStorage.getItem('llmSystemPrompt') || 'You are a helpful assistant.';
+  const persona = localStorage.getItem('llmPersona') || '';
+  if (!proxyUrl || !apiKey) return;
+
+  const assistantMsg = { role: 'assistant', content: '', swipes: [''], swipeIndex: 0 };
+  messages.push(assistantMsg);
+
+  const area = document.getElementById('messagesArea');
+  const wrapper = document.createElement('div');
+  wrapper.className = 'msg-wrapper assistant';
+  const bubble = document.createElement('div');
+  bubble.className = 'msg-bubble assistant';
+  bubble.innerHTML = '<span style="color:var(--text-secondary)">Thinking...</span>';
+  wrapper.appendChild(bubble);
+  area.appendChild(wrapper);
+  area.scrollTop = area.scrollHeight;
+
+  const apiMessages = [{ role: 'system', content: systemPrompt }];
+  if (persona) apiMessages.push({ role: 'system', content: 'About the user: ' + persona });
+  messages.forEach(m => { if (m.role !== 'system') apiMessages.push({ role: m.role, content: m.content }); });
+
+  await streamResponse(apiMessages, assistantMsg, 0, bubble);
+
+  const conv = getActiveConv();
+  if (conv) conv.updatedAt = Date.now();
+  saveConversations();
+  renderMessages();
+  updateTokenInfo();
+}
+
 // ============================================
 // Swipe
 // ============================================
@@ -892,9 +1635,15 @@ function swipeMsg(idx, dir) {
 // Streaming
 // ============================================
 async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl) {
-  const proxyUrl = localStorage.getItem('llmProxyUrl');
+  const baseUrl = (localStorage.getItem('llmProxyUrl') || '').replace(/\/+$/, '');
   const apiKey = localStorage.getItem('llmApiKey');
   const model = localStorage.getItem('llmModel') || 'gpt-4o';
+  const format = detectApiFormat(model);
+
+  // Extra params & excludes
+  let extra = {};
+  try { extra = JSON.parse(localStorage.getItem('llmExtraParams') || '{}'); } catch(e) {}
+  const exclude = (localStorage.getItem('llmExcludeParams') || '').split(',').map(s => s.trim()).filter(Boolean);
 
   abortController = new AbortController();
   streaming = true;
@@ -907,23 +1656,55 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl) {
   let lastRender = 0;
 
   try {
-    const resp = await fetch(proxyUrl, {
+    let url, headers, body;
+
+    if (format === 'anthropic') {
+      url = baseUrl + '/messages';
+      headers = {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01'
+      };
+      const prepared = prepareAnthropicMessages(apiMessages);
+      body = { model, system: prepared.system, messages: prepared.messages, max_tokens: 4096, stream: true, ...extra };
+    } else {
+      url = baseUrl + '/chat/completions';
+      headers = {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + apiKey
+      };
+      body = { model, messages: apiMessages, stream: true, ...extra };
+    }
+    exclude.forEach(k => delete body[k]);
+
+    const resp = await fetch(url, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + apiKey },
-      body: JSON.stringify({ model, messages: apiMessages, stream: true }),
+      headers,
+      body: JSON.stringify(body),
       signal: abortController.signal
     });
 
-    if (!resp.ok) throw new Error('API returned ' + resp.status);
+    if (!resp.ok) {
+      let errText = '';
+      try { errText = await resp.text(); } catch(e) {}
+      throw new Error('API returned ' + resp.status + (errText ? ': ' + errText.slice(0, 200) : ''));
+    }
+
     const ct = resp.headers.get('content-type') || '';
 
     if (ct.includes('application/json')) {
       const data = await resp.json();
-      fullText = data.choices?.[0]?.message?.content || 'No response.';
+      if (format === 'anthropic') {
+        fullText = (data.content || []).filter(c => c.type === 'text').map(c => c.text).join('') || 'No response.';
+      } else {
+        fullText = data.choices?.[0]?.message?.content || 'No response.';
+      }
       assistantMsg.swipes[swipeIdx] = fullText;
       assistantMsg.content = fullText;
       bubbleEl.innerHTML = renderMarkdown(fullText);
+      addCodeCopyButtons(bubbleEl);
     } else {
+      // SSE streaming
       const reader = resp.body.getReader();
       const decoder = new TextDecoder();
       let buffer = '';
@@ -937,27 +1718,45 @@ async function streamResponse(apiMessages, assistantMsg, swipeIdx, bubbleEl) {
 
         for (const line of lines) {
           const trimmed = line.trim();
-          if (!trimmed || !trimmed.startsWith('data:')) continue;
-          const payload = trimmed.slice(5).trim();
-          if (payload === '[DONE]') continue;
-          try {
-            const json = JSON.parse(payload);
-            const delta = json.choices?.[0]?.delta?.content;
-            if (delta) {
-              fullText += delta;
-              assistantMsg.swipes[swipeIdx] = fullText;
-              assistantMsg.content = fullText;
-              const now = Date.now();
-              if (now - lastRender > 80) {
-                bubbleEl.innerHTML = renderMarkdown(fullText);
-                document.getElementById('messagesArea').scrollTop = document.getElementById('messagesArea').scrollHeight;
-                lastRender = now;
+
+          if (format === 'anthropic') {
+            if (!trimmed.startsWith('data:')) continue;
+            const payload = trimmed.slice(5).trim();
+            if (!payload) continue;
+            try {
+              const json = JSON.parse(payload);
+              if (json.type === 'content_block_delta' && json.delta?.text) {
+                fullText += json.delta.text;
+              } else if (json.type === 'message_stop') {
+                // done
+              } else if (json.type === 'error') {
+                throw new Error(json.error?.message || 'Anthropic API error');
               }
-            }
-          } catch (e) {}
+            } catch(e) { if (e.message && !e.message.startsWith('Unexpected')) throw e; }
+          } else {
+            // OpenAI format
+            if (!trimmed.startsWith('data:')) continue;
+            const payload = trimmed.slice(5).trim();
+            if (payload === '[DONE]') continue;
+            try {
+              const json = JSON.parse(payload);
+              const delta = json.choices?.[0]?.delta?.content;
+              if (delta) fullText += delta;
+            } catch(e) {}
+          }
+        }
+
+        assistantMsg.swipes[swipeIdx] = fullText;
+        assistantMsg.content = fullText;
+        const now = Date.now();
+        if (now - lastRender > 80) {
+          bubbleEl.innerHTML = renderMarkdown(fullText);
+          document.getElementById('messagesArea').scrollTop = document.getElementById('messagesArea').scrollHeight;
+          lastRender = now;
         }
       }
       bubbleEl.innerHTML = renderMarkdown(fullText);
+      addCodeCopyButtons(bubbleEl);
     }
   } catch (e) {
     if (e.name === 'AbortError') {
@@ -1105,7 +1904,7 @@ function clearChat() {
 }
 
 // ============================================
-// Export / Import Conversation
+// Export / Import
 // ============================================
 function exportConversation() {
   const conv = getActiveConv();
@@ -1116,6 +1915,28 @@ function exportConversation() {
   const a = document.createElement('a');
   a.href = url;
   a.download = (conv.title || 'chat') + '.json';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function exportAllConversations() {
+  const data = {
+    conversations: conversations,
+    exportedAt: new Date().toISOString(),
+    settings: {
+      model: localStorage.getItem('llmModel') || '',
+      systemPrompt: localStorage.getItem('llmSystemPrompt') || '',
+      persona: localStorage.getItem('llmPersona') || '',
+      apiFormat: localStorage.getItem('llmApiFormat') || 'auto',
+      theme: localStorage.getItem('assistantTheme') || 'dark',
+      font: localStorage.getItem('assistantFont') || ''
+    }
+  };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'assistant-export-' + new Date().toISOString().slice(0, 10) + '.json';
   a.click();
   URL.revokeObjectURL(url);
 }
