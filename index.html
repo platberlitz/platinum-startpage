@@ -1500,7 +1500,7 @@ input[type="file"] {
     <div class="section-title">AI Chat</div>
     <div style="margin-bottom:12px">
       <label class="setting-label" style="display:block;margin-bottom:4px;font-size:0.85em">Proxy URL</label>
-      <input type="text" id="llmProxyUrl" placeholder="https://your-proxy.com/v1/chat/completions" style="width:100%;padding:12px;font-family:inherit;font-size:0.9em;background:rgba(255,255,255,0.05);border:1px solid var(--card-border);border-radius:8px;color:var(--text-primary);margin-bottom:0">
+      <input type="text" id="llmProxyUrl" placeholder="https://your-proxy.com/v1 or .../v1/chat/completions" style="width:100%;padding:12px;font-family:inherit;font-size:0.9em;background:rgba(255,255,255,0.05);border:1px solid var(--card-border);border-radius:8px;color:var(--text-primary);margin-bottom:0">
     </div>
     <div style="margin-bottom:12px">
       <label class="setting-label" style="display:block;margin-bottom:4px;font-size:0.85em">API Key</label>
@@ -3547,9 +3547,16 @@ function swipeMessage(idx, direction) {
   renderChatMessages();
 }
 
+function normalizeLLMUrl(url) {
+  if (!url) return url;
+  url = url.replace(/\/+$/, '');
+  if (url.endsWith('/v1')) url += '/chat/completions';
+  return url;
+}
+
 // --- Streaming Core ---
 async function streamChatResponse(messages, assistantMsg, swipeIdx, assistantDiv) {
-  const proxyUrl = localStorage.getItem('llmProxyUrl');
+  const proxyUrl = normalizeLLMUrl(localStorage.getItem('llmProxyUrl'));
   const apiKey = localStorage.getItem('llmApiKey');
   const model = localStorage.getItem('llmModel') || 'gpt-4o';
 
@@ -3666,7 +3673,7 @@ async function sendChatMessage() {
   const text = input.value.trim();
   if (!text && pendingImages.length === 0) return;
 
-  const proxyUrl = localStorage.getItem('llmProxyUrl');
+  const proxyUrl = normalizeLLMUrl(localStorage.getItem('llmProxyUrl'));
   const apiKey = localStorage.getItem('llmApiKey');
   const systemPrompt = localStorage.getItem('llmSystemPrompt') || 'You are a helpful assistant.';
   const persona = localStorage.getItem('llmPersona') || '';
