@@ -2403,8 +2403,6 @@ function renderNews(articles) {
     const item = document.createElement('a');
     item.className = 'news-item';
     item.href = article.url;
-    item.target = '_blank';
-    item.rel = 'noopener noreferrer';
     item.innerHTML = `
       <div class="news-title">${article.title}</div>
       <div class="news-meta">${article.source} &bull; ${article.date}</div>
@@ -2831,8 +2829,6 @@ function renderQuickLinks() {
     const a = document.createElement('a');
     a.className = 'link-btn';
     a.href = link.url;
-    a.target = '_blank';
-    a.rel = 'noopener noreferrer';
     a.innerHTML = `<span class="link-icon">${link.icon}</span><span>${link.label}</span>`;
     grid.appendChild(a);
   });
