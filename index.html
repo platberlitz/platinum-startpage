@@ -1475,12 +1475,38 @@ input[type="file"] {
   <div class="settings-section">
     <div class="section-title">Theme Presets</div>
     <select class="theme-select" id="themeSelect" onchange="applyThemePreset(this.value)">
-      <option value="custom">Custom</option>
-      <option value="nord">Nord</option>
-      <option value="catppuccin">Catppuccin</option>
-      <option value="dracula">Dracula</option>
-      <option value="gruvbox">Gruvbox</option>
-      <option value="tokyonight">Tokyo Night</option>
+      <optgroup label="Classic">
+        <option value="custom">Custom</option>
+        <option value="nord">Nord</option>
+        <option value="catppuccin">Catppuccin</option>
+        <option value="dracula">Dracula</option>
+        <option value="gruvbox">Gruvbox</option>
+        <option value="tokyonight">Tokyo Night</option>
+      </optgroup>
+      <optgroup label="HyDE Gallery">
+        <option value="oneBit">1-Bit</option>
+        <option value="graphiteMono">Graphite Mono</option>
+        <option value="abyssalWave">Abyssal Wave</option>
+        <option value="cosmicBlue">Cosmic Blue</option>
+        <option value="pixelDream">Pixel Dream</option>
+        <option value="anotherWorld">Another World</option>
+        <option value="obsidianPurple">Obsidian Purple</option>
+        <option value="scarletNight">Scarlet Night</option>
+        <option value="synthWave">Synth Wave</option>
+        <option value="amethystAura">Amethyst Aura</option>
+        <option value="decayGreen">Decay Green</option>
+        <option value="greenLush">Green Lush</option>
+        <option value="rainDark">Rain Dark</option>
+        <option value="everBlushing">Ever Blushing</option>
+        <option value="edgeRunner">Edge Runner</option>
+        <option value="monokai">Monokai</option>
+        <option value="redStone">Red Stone</option>
+        <option value="soulsborne">Soulsborne</option>
+        <option value="doomBringers">Doom Bringers</option>
+        <option value="nightbrew">Nightbrew</option>
+        <option value="joker">Joker</option>
+        <option value="nordicBlue">Nordic Blue</option>
+      </optgroup>
     </select>
   </div>
 
@@ -1891,7 +1917,30 @@ const themePresets = {
   catppuccin: { bg: '#1e1e2e', card: '#313244', accent: '#cba6f7', font: '#cdd6f4' },
   dracula: { bg: '#282a36', card: '#44475a', accent: '#bd93f9', font: '#f8f8f2' },
   gruvbox: { bg: '#282828', card: '#3c3836', accent: '#fabd2f', font: '#ebdbb2' },
-  tokyonight: { bg: '#1a1b26', card: '#24283b', accent: '#7aa2f7', font: '#c0caf5' }
+  tokyonight: { bg: '#1a1b26', card: '#24283b', accent: '#7aa2f7', font: '#c0caf5' },
+  // HyDE Gallery
+  oneBit:         { bg: '#131313', card: '#222222', accent: '#FCFCFC', font: '#e0e0e0' },
+  graphiteMono:   { bg: '#222222', card: '#333333', accent: '#D9D9D9', font: '#e0e0e0' },
+  abyssalWave:    { bg: '#061234', card: '#0f1e44', accent: '#50AA09', font: '#d0e0d0' },
+  cosmicBlue:     { bg: '#1E212B', card: '#2a2e3a', accent: '#5B6B76', font: '#c8cdd2' },
+  pixelDream:     { bg: '#1e4c84', card: '#2a5a94', accent: '#7ed6ff', font: '#e0f0ff' },
+  anotherWorld:   { bg: '#0D55B2', card: '#1a64c0', accent: '#249CB6', font: '#e0f0f8' },
+  obsidianPurple: { bg: '#07040C', card: '#16121e', accent: '#BDA8DC', font: '#e0d8e8' },
+  scarletNight:   { bg: '#1E2233', card: '#2a2e44', accent: '#822195', font: '#dcd0e0' },
+  synthWave:      { bg: '#495495', card: '#5a64a5', accent: '#ff7edb', font: '#f0e0f8' },
+  amethystAura:   { bg: '#5D69CE', card: '#6d79de', accent: '#A45785', font: '#f0e8f0' },
+  decayGreen:     { bg: '#14161E', card: '#20222e', accent: '#95D3AF', font: '#d8e8e0' },
+  greenLush:      { bg: '#373C3F', card: '#454b4f', accent: '#83B38E', font: '#d8e8d8' },
+  rainDark:       { bg: '#295233', card: '#376243', accent: '#89E574', font: '#d8f0d0' },
+  everBlushing:   { bg: '#141b1e', card: '#20282e', accent: '#67b0e8', font: '#d0e0f0' },
+  edgeRunner:     { bg: '#000000', card: '#141414', accent: '#fada16', font: '#e0e0e0' },
+  monokai:        { bg: '#2d2a2e', card: '#3d3a3e', accent: '#f92672', font: '#f8f8f2' },
+  redStone:       { bg: '#161616', card: '#262626', accent: '#EE5396', font: '#e8d8e0' },
+  soulsborne:     { bg: '#0D0D0D', card: '#1d1d1d', accent: '#E0701E', font: '#e8d8c8' },
+  doomBringers:   { bg: '#351810', card: '#452820', accent: '#FABD2F', font: '#f0e0c8' },
+  nightbrew:      { bg: '#821595', card: '#9225a5', accent: '#259E9C', font: '#e0f0f0' },
+  joker:          { bg: '#4B0082', card: '#5b1092', accent: '#00FF66', font: '#d8f8e0' },
+  nordicBlue:     { bg: '#2E3440', card: '#3b4252', accent: '#88C0D0', font: '#eceff4' }
 };
 
 const weatherIcons = {
