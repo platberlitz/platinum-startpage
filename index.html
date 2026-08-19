@@ -4,9 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Startpage</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 /* CSS Variables for theming */
 :root {
@@ -95,7 +92,7 @@ body::before {
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-.card:hover {
+.emoticon-card:hover {
   transform: translateY(-2px);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
 }
@@ -111,6 +108,17 @@ body::before {
   gap: 12px;
   align-items: center;
 }
+
+.search-clock {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  line-height: 1.1;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.search-clock-time { font-size: 1.1em; font-weight: 600; color: var(--accent); }
+.search-clock-date { font-size: 0.65em; color: var(--text-secondary); }
 
 .search-input {
   flex: 1;
@@ -331,7 +339,50 @@ body::before {
   grid-area: notes;
   display: flex;
   flex-direction: column;
+  min-height: 0;
 }
+
+.notes-tabs {
+  display: flex;
+  gap: 4px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.notes-tab {
+  padding: 3px 8px;
+  font-size: 0.65em;
+  font-family: inherit;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-secondary);
+  border: 1px solid transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  white-space: nowrap;
+  max-width: 100px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.notes-tab.active { background: var(--accent); color: white; }
+
+.notes-preview {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 8px;
+  font-size: 0.8em;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--card-border);
+  border-radius: 6px;
+  cursor: text;
+}
+.notes-preview:empty::before { content: 'Write your notes here...'; color: var(--text-secondary); }
+.notes-preview input[type="checkbox"] { accent-color: var(--accent); margin-right: 6px; vertical-align: -1px; cursor: pointer; }
+.notes-preview .done { text-decoration: line-through; color: var(--text-secondary); }
+.notes-card.editing .notes-preview { display: none; }
+.notes-card:not(.editing) .notes-textarea { display: none; }
 
 .notes-textarea {
   flex: 1;
@@ -489,6 +540,12 @@ body::before {
   margin-top: 2px;
 }
 
+.weather-extra {
+  font-size: 0.65em;
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+
 /* Quick Links Card */
 .links-card {
   grid-area: links;
@@ -525,6 +582,40 @@ body::before {
 
 .link-icon {
   font-size: 1.2em;
+  line-height: 1;
+}
+.link-icon img { width: 16px; height: 16px; display: block; }
+
+/* Slideshow manager */
+.slide-thumbs {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  max-height: 300px;
+  overflow-y: auto;
+  margin-bottom: 12px;
+}
+.slide-thumb { position: relative; aspect-ratio: 1; }
+.slide-thumb img { width: 100%; height: 100%; object-fit: cover; border-radius: 6px; display: block; }
+.slide-thumb button {
+  position: absolute; top: 4px; right: 4px;
+  width: 22px; height: 22px; border-radius: 50%; border: none;
+  background: rgba(0,0,0,0.7); color: #fff; cursor: pointer; font-size: 14px; line-height: 1;
+}
+.slide-thumb button:hover { background: #ef4444; }
+
+/* Shortcut help */
+.shortcut-list { display: grid; grid-template-columns: auto 1fr; gap: 6px 16px; font-size: 0.85em; margin-bottom: 16px; }
+.shortcut-list kbd {
+  font-family: Menlo, Consolas, monospace; font-size: 0.85em;
+  padding: 2px 6px; border-radius: 4px;
+  background: rgba(255,255,255,0.08); border: 1px solid var(--card-border);
+}
+
+/* Cap row-2 cards on desktop so long link/clock lists scroll instead of squeezing row 3 */
+@media (min-width: 601px) {
+  .timezone-card, .links-card { max-height: 40vh; }
+  .links-grid { overflow-y: auto; min-height: 0; }
 }
 
 /* Font Size Controls */
@@ -1283,6 +1374,19 @@ input[type="file"] {
   .links-grid {
     grid-template-columns: 1fr 1fr;
   }
+
+  .chat-card {
+    inset: 10px 10px 60px 10px !important; /* beats the inline drag position */
+    width: auto !important;
+    height: auto !important;
+    resize: none;
+  }
+
+  .calc-popup {
+    left: 10px;
+    right: 10px;
+    width: auto;
+  }
 }
 </style>
 </head>
@@ -1293,7 +1397,8 @@ input[type="file"] {
     <!-- Search Card -->
     <div class="card search-card">
       <form class="search-form" onsubmit="handleSearch(event)">
-        <input type="text" id="searchInput" class="search-input" placeholder="Search the web..." autofocus>
+        <div class="search-clock"><span class="search-clock-time" id="localTime">--:--</span><span class="search-clock-date" id="localDate"></span></div>
+        <input type="text" id="searchInput" class="search-input" placeholder="Search the web...  (!g !yt !w !gh !r  ·  ? for shortcuts)" autofocus>
         <button type="submit" class="search-btn">Search</button>
       </form>
     </div>
@@ -1337,7 +1442,7 @@ input[type="file"] {
       <div class="slideshow-container" id="slideshowContainer">
         <div class="slideshow-placeholder">Click to add images</div>
       </div>
-      <div class="slideshow-overlay" onclick="document.getElementById('slideshowInput').click()">
+      <div class="slideshow-overlay" onclick="openSlideshowModal()">
         <span>Click to manage images</span>
       </div>
       <input type="file" id="slideshowInput" accept="image/*" multiple style="display:none" onchange="handleSlideshowUpload(event)">
@@ -1346,9 +1451,14 @@ input[type="file"] {
     <!-- Notes Card -->
     <div class="card notes-card">
       <div class="card-header">
-        <span class="card-title">Notes</span>
+        <div class="notes-tabs" id="notesTabs"></div>
+        <div style="display:flex;gap:4px;flex-shrink:0">
+          <button class="add-btn" onclick="addNoteTab()" title="New note">+</button>
+          <button class="add-btn" onclick="deleteNoteTab()" title="Delete this note">&times;</button>
+        </div>
       </div>
-      <textarea class="notes-textarea" id="notesArea" placeholder="Write your notes here..."></textarea>
+      <div class="notes-preview" id="notesPreview" onclick="startNotesEdit(event)"></div>
+      <textarea class="notes-textarea" id="notesArea" placeholder="Write your notes here... (- [ ] makes a checkbox)"></textarea>
       <div class="save-indicator" id="saveIndicator">Saved</div>
     </div>
 
@@ -1573,37 +1683,68 @@ input[type="file"] {
     <button class="btn btn-block btn-danger" onclick="clearAllData()">Clear All Data</button>
     <div class="storage-info" id="storageInfo">Calculating storage...</div>
   </div>
+
+  <div class="settings-section">
+    <div class="section-title">Sync (GitHub Gist)</div>
+    <div style="margin-bottom:12px">
+      <label class="setting-label" style="display:block;margin-bottom:4px;font-size:0.85em">Token (needs the <code>gist</code> scope)</label>
+      <input type="password" id="gistToken" placeholder="ghp_..." style="width:100%;padding:12px;font-family:inherit;font-size:0.9em;background:rgba(255,255,255,0.05);border:1px solid var(--card-border);border-radius:8px;color:var(--text-primary)">
+    </div>
+    <div style="margin-bottom:12px">
+      <label class="setting-label" style="display:block;margin-bottom:4px;font-size:0.85em">Gist ID (leave empty to create one on first push)</label>
+      <input type="text" id="gistId" placeholder="e.g. 3f2a9c…" style="width:100%;padding:12px;font-family:inherit;font-size:0.9em;background:rgba(255,255,255,0.05);border:1px solid var(--card-border);border-radius:8px;color:var(--text-primary)">
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="btn" style="flex:1" onclick="gistPush()">Push</button>
+      <button class="btn" style="flex:1" onclick="gistPull()">Pull</button>
+    </div>
+    <div class="storage-info" id="gistStatus">Settings, links, notes, quotes and chats sync. Images and API keys stay local.</div>
+  </div>
 </div>
 
 <!-- Timezone Modal -->
 <div class="modal-overlay" id="timezoneModal">
   <div class="modal">
     <div class="modal-title">Add Timezone</div>
-    <select id="timezoneSelect">
-      <option value="Asia/Manila">Manila, Philippines</option>
-      <option value="Africa/Cairo">Cairo, Egypt</option>
-      <option value="Asia/Amman">Amman, Jordan</option>
-      <option value="Europe/London">London/Scotland, UK</option>
-      <option value="America/New_York">New York, USA</option>
-      <option value="America/Los_Angeles">Los Angeles, USA</option>
-      <option value="Europe/Paris">Paris, France</option>
-      <option value="Europe/Berlin">Berlin, Germany</option>
-      <option value="Asia/Tokyo">Tokyo, Japan</option>
-      <option value="Asia/Seoul">Seoul, South Korea</option>
-      <option value="Asia/Singapore">Singapore</option>
-      <option value="Asia/Dubai">Dubai, UAE</option>
-      <option value="Australia/Sydney">Sydney, Australia</option>
-      <option value="Pacific/Auckland">Auckland, New Zealand</option>
-      <option value="America/Chicago">Chicago, USA</option>
-      <option value="America/Toronto">Toronto, Canada</option>
-      <option value="Europe/Moscow">Moscow, Russia</option>
-      <option value="Asia/Hong_Kong">Hong Kong</option>
-      <option value="Asia/Bangkok">Bangkok, Thailand</option>
-      <option value="Asia/Jakarta">Jakarta, Indonesia</option>
-    </select>
+    <input type="text" id="timezoneInput" list="timezoneOptions" placeholder="Type a city or zone, e.g. Europe/Lisbon" autocomplete="off" style="width:100%;padding:12px;font-family:inherit;font-size:0.9em;background:rgba(255,255,255,0.05);border:1px solid var(--card-border);border-radius:8px;color:var(--text-primary);margin-bottom:8px">
+    <datalist id="timezoneOptions"></datalist>
+    <input type="text" id="timezoneLabel" placeholder="Label (optional)" style="width:100%;padding:12px;font-family:inherit;font-size:0.9em;background:rgba(255,255,255,0.05);border:1px solid var(--card-border);border-radius:8px;color:var(--text-primary);margin-bottom:16px">
     <div class="modal-actions">
       <button class="btn" onclick="closeTimezoneModal()">Cancel</button>
       <button class="btn" style="background:var(--accent)" onclick="addTimezone()">Add</button>
+    </div>
+  </div>
+</div>
+
+<!-- Slideshow Modal -->
+<div class="modal-overlay" id="slideshowModal">
+  <div class="modal" style="max-width:500px">
+    <div class="modal-title">Slideshow Images</div>
+    <div class="slide-thumbs" id="slideThumbs"></div>
+    <button class="btn btn-block" onclick="document.getElementById('slideshowInput').click()">+ Add Images</button>
+    <div class="modal-actions" style="margin-top:8px">
+      <button class="btn" onclick="closeSlideshowModal()">Done</button>
+    </div>
+  </div>
+</div>
+
+<!-- Shortcuts Modal -->
+<div class="modal-overlay" id="shortcutsModal">
+  <div class="modal">
+    <div class="modal-title">Keyboard Shortcuts</div>
+    <div class="shortcut-list">
+      <kbd>/</kbd><span>Focus search</span>
+      <kbd>?</kbd><span>This help</span>
+      <span><kbd>1</kbd>–<kbd>9</kbd></span><span>Open quick link 1–9</span>
+      <kbd>n</kbd><span>Edit notes</span>
+      <kbd>c</kbd><span>Toggle AI chat</span>
+      <kbd>Esc</kbd><span>Close panels / stop chat</span>
+      <kbd>a–z</kbd><span>Any other key starts a search</span>
+    </div>
+    <div class="modal-title" style="font-size:0.9em">Search bangs</div>
+    <div class="shortcut-list" id="bangList"></div>
+    <div class="modal-actions">
+      <button class="btn" onclick="document.getElementById('shortcutsModal').classList.remove('open')">Close</button>
     </div>
   </div>
 </div>
@@ -1638,7 +1779,7 @@ input[type="file"] {
 <div class="modal-overlay" id="layoutModal">
   <div class="modal" style="max-width:450px">
     <div class="modal-title">Customize Layout</div>
-    <p style="font-size:0.75em;color:var(--text-secondary);margin-bottom:16px">Drag cards to rearrange or use dropdowns to swap positions</p>
+    <p style="font-size:0.75em;color:var(--text-secondary);margin-bottom:16px">Pick which card goes in each position</p>
     <div class="layout-editor">
       <div class="layout-row">
         <div class="layout-cell">
@@ -1923,35 +2064,69 @@ const defaultQuickLinks = [
 ];
 
 const themePresets = {
-  nord: { bg: '#2e3440', card: '#3b4252', accent: '#88c0d0', font: '#eceff4' },
-  catppuccin: { bg: '#1e1e2e', card: '#313244', accent: '#cba6f7', font: '#cdd6f4' },
-  dracula: { bg: '#282a36', card: '#44475a', accent: '#bd93f9', font: '#f8f8f2' },
-  gruvbox: { bg: '#282828', card: '#3c3836', accent: '#fabd2f', font: '#ebdbb2' },
-  tokyonight: { bg: '#1a1b26', card: '#24283b', accent: '#7aa2f7', font: '#c0caf5' },
-  // HyDE Gallery
-  oneBit:         { bg: '#131313', card: '#222222', accent: '#FCFCFC', font: '#e0e0e0' },
-  graphiteMono:   { bg: '#222222', card: '#333333', accent: '#D9D9D9', font: '#e0e0e0' },
-  abyssalWave:    { bg: '#061234', card: '#0f1e44', accent: '#50AA09', font: '#d0e0d0' },
-  cosmicBlue:     { bg: '#1E212B', card: '#2a2e3a', accent: '#5B6B76', font: '#c8cdd2' },
-  pixelDream:     { bg: '#1e4c84', card: '#2a5a94', accent: '#7ed6ff', font: '#e0f0ff' },
-  anotherWorld:   { bg: '#0D55B2', card: '#1a64c0', accent: '#249CB6', font: '#e0f0f8' },
-  obsidianPurple: { bg: '#07040C', card: '#16121e', accent: '#BDA8DC', font: '#e0d8e8' },
-  scarletNight:   { bg: '#1E2233', card: '#2a2e44', accent: '#822195', font: '#dcd0e0' },
-  synthWave:      { bg: '#495495', card: '#5a64a5', accent: '#ff7edb', font: '#f0e0f8' },
-  amethystAura:   { bg: '#5D69CE', card: '#6d79de', accent: '#A45785', font: '#f0e8f0' },
-  decayGreen:     { bg: '#14161E', card: '#20222e', accent: '#95D3AF', font: '#d8e8e0' },
-  greenLush:      { bg: '#373C3F', card: '#454b4f', accent: '#83B38E', font: '#d8e8d8' },
-  rainDark:       { bg: '#295233', card: '#376243', accent: '#89E574', font: '#d8f0d0' },
-  everBlushing:   { bg: '#141b1e', card: '#20282e', accent: '#67b0e8', font: '#d0e0f0' },
-  edgeRunner:     { bg: '#000000', card: '#141414', accent: '#fada16', font: '#e0e0e0' },
-  monokai:        { bg: '#2d2a2e', card: '#3d3a3e', accent: '#f92672', font: '#f8f8f2' },
-  redStone:       { bg: '#161616', card: '#262626', accent: '#EE5396', font: '#e8d8e0' },
-  soulsborne:     { bg: '#0D0D0D', card: '#1d1d1d', accent: '#E0701E', font: '#e8d8c8' },
-  doomBringers:   { bg: '#351810', card: '#452820', accent: '#FABD2F', font: '#f0e0c8' },
-  nightbrew:      { bg: '#821595', card: '#9225a5', accent: '#259E9C', font: '#e0f0f0' },
-  joker:          { bg: '#4B0082', card: '#5b1092', accent: '#00FF66', font: '#d8f8e0' },
-  nordicBlue:     { bg: '#2E3440', card: '#3b4252', accent: '#88C0D0', font: '#eceff4' }
+  dark:           { bg: '#0a0a0f', card: '#1e1e23', accent: '#6366f1', font: '#f2f2f2' },
+  light:          { bg: '#f5f5f7', card: '#ffffff', accent: '#6366f1', font: '#1a1a1a' },
+  nord:           { bg: '#2e3440', card: '#3b4252', accent: '#88c0d0', font: '#eceff4' },
+  catppuccin:     { bg: '#1e1e2e', card: '#313244', accent: '#cba6f7', font: '#cdd6f4' },
+  dracula:        { bg: '#282a36', card: '#44475a', accent: '#bd93f9', font: '#f8f8f2' },
+  gruvbox:        { bg: '#282828', card: '#3c3836', accent: '#fabd2f', font: '#ebdbb2' },
+  tokyonight:     { bg: '#1a1b26', card: '#24283b', accent: '#7aa2f7', font: '#c0caf5' },
+  solarized:      { bg: '#002b36', card: '#073642', accent: '#268bd2', font: '#fdf6e3' },
+  onedark:        { bg: '#282c34', card: '#21252b', accent: '#61afef', font: '#abb2bf' },
+  rosepine:       { bg: '#191724', card: '#1f1d2e', accent: '#c4a7e7', font: '#e0def4' },
+  claude:         { bg: '#FAF9F5', card: '#EBE7DF', accent: '#D97757', font: '#1a1915' },
+  claudeDark:     { bg: '#1a1915', card: '#2b2a27', accent: '#D97757', font: '#e8e4db' },
+  // Gallery (same values as the assistant project)
+  monochrome:     { bg: '#131313', card: '#222222', accent: '#FCFCFC', font: '#e0e0e0' },
+  pewter:         { bg: '#222222', card: '#333333', accent: '#D9D9D9', font: '#e0e0e0' },
+  deepSea:        { bg: '#061234', card: '#0f1e44', accent: '#50AA09', font: '#d0e0d0' },
+  gunmetal:       { bg: '#1E212B', card: '#2a2e3a', accent: '#5B6B76', font: '#c8cdd2' },
+  clearSky:       { bg: '#1e4c84', card: '#2a5a94', accent: '#7ed6ff', font: '#e0f0ff' },
+  cobalt:         { bg: '#0D55B2', card: '#1a64c0', accent: '#249CB6', font: '#e0f0f8' },
+  nightshade:     { bg: '#07040C', card: '#16121e', accent: '#BDA8DC', font: '#e0d8e8' },
+  plumWine:       { bg: '#1E2233', card: '#2a2e44', accent: '#822195', font: '#dcd0e0' },
+  neonDusk:       { bg: '#495495', card: '#5a64a5', accent: '#ff7edb', font: '#f0e0f8' },
+  lavenderHaze:   { bg: '#5D69CE', card: '#6d79de', accent: '#A45785', font: '#f0e8f0' },
+  jadeMist:       { bg: '#14161E', card: '#20222e', accent: '#95D3AF', font: '#d8e8e0' },
+  mossStone:      { bg: '#373C3F', card: '#454b4f', accent: '#83B38E', font: '#d8e8d8' },
+  emeraldForest:  { bg: '#295233', card: '#376243', accent: '#89E574', font: '#d8f0d0' },
+  winterBreeze:   { bg: '#141b1e', card: '#20282e', accent: '#67b0e8', font: '#d0e0f0' },
+  neonNoir:       { bg: '#000000', card: '#141414', accent: '#fada16', font: '#e0e0e0' },
+  hotPink:        { bg: '#2d2a2e', card: '#3d3a3e', accent: '#f92672', font: '#f8f8f2' },
+  roseQuartz:     { bg: '#161616', card: '#262626', accent: '#EE5396', font: '#e8d8e0' },
+  ember:          { bg: '#0D0D0D', card: '#1d1d1d', accent: '#E0701E', font: '#e8d8c8' },
+  moltenCore:     { bg: '#351810', card: '#452820', accent: '#FABD2F', font: '#f0e0c8' },
+  orchidTeal:     { bg: '#821595', card: '#9225a5', accent: '#259E9C', font: '#e0f0f0' },
+  acidGlow:       { bg: '#4B0082', card: '#5b1092', accent: '#00FF66', font: '#d8f8e0' },
+  fjord:          { bg: '#2E3440', card: '#3b4252', accent: '#88C0D0', font: '#eceff4' },
+  oxide:          { bg: '#0f1115', card: '#151922', accent: '#f26a2e', font: '#e8e6e3' },
+  blueprint:      { bg: '#0b1220', card: '#101a2e', accent: '#4aa3ff', font: '#e6edf6' },
+  paperInk:       { bg: '#f6f3ee', card: '#f0ece5', accent: '#2f6fb2', font: '#1f1b16' },
+  moss:           { bg: '#101612', card: '#161d17', accent: '#7ac27b', font: '#e0e7df' }
 };
+
+// Old preset names (pre-sync) -> current names
+const themeMigration = {
+  oneBit:'monochrome', graphiteMono:'pewter', abyssalWave:'deepSea', cosmicBlue:'gunmetal',
+  pixelDream:'clearSky', anotherWorld:'cobalt', obsidianPurple:'nightshade', scarletNight:'plumWine',
+  synthWave:'neonDusk', amethystAura:'lavenderHaze', decayGreen:'jadeMist', greenLush:'mossStone',
+  rainDark:'emeraldForest', everBlushing:'winterBreeze', edgeRunner:'neonNoir', monokai:'hotPink',
+  redStone:'roseQuartz', soulsborne:'ember', doomBringers:'moltenCore', nightbrew:'orchidTeal',
+  joker:'acidGlow', nordicBlue:'fjord'
+};
+
+const searchBangs = {
+  g:  ['Google',      'https://www.google.com/search?q='],
+  yt: ['YouTube',     'https://www.youtube.com/results?search_query='],
+  w:  ['Wikipedia',   'https://en.wikipedia.org/w/index.php?search='],
+  gh: ['GitHub',      'https://github.com/search?q='],
+  r:  ['Reddit',      'https://www.reddit.com/search/?q='],
+  ddg:['DuckDuckGo',  'https://duckduckgo.com/?q='],
+  a:  ['Amazon',      'https://www.amazon.com/s?k='],
+  maps:['Google Maps','https://www.google.com/maps/search/']
+};
+
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
 
 const weatherIcons = {
   0: '☀️', 1: '🌤️', 2: '⛅', 3: '☁️',
@@ -2010,7 +2185,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   loadQuickLinks();
   loadCalcHistory();
   loadLLMSettings();
+  loadGistFields();
   loadChatHistory();
+  renderBangList();
+  populateTimezoneList();
   await loadSlideshowImages();
   await loadBackgroundImage();
   loadNews();
@@ -2026,9 +2204,21 @@ document.addEventListener('DOMContentLoaded', async () => {
 function handleSearch(event) {
   event.preventDefault();
   const query = document.getElementById('searchInput').value.trim();
-  if (query) {
-    window.location.href = `https://www.startpage.com/sp/search?query=${encodeURIComponent(query)}`;
+  if (!query) return;
+  const bang = query.match(/(?:^|\s)!(\w+)(?=\s|$)/);
+  if (bang && searchBangs[bang[1]]) {
+    const rest = query.replace(bang[0], ' ').trim();
+    const [, base] = searchBangs[bang[1]];
+    // Bare bang (e.g. "!yt") goes to the site's front page
+    window.location.href = rest ? base + encodeURIComponent(rest) : new URL(base).origin;
+    return;
   }
+  window.location.href = `https://www.startpage.com/sp/search?query=${encodeURIComponent(query)}`;
+}
+
+function renderBangList() {
+  document.getElementById('bangList').innerHTML = Object.entries(searchBangs)
+    .map(([k, [name]]) => `<kbd>!${k}</kbd><span>${name}</span>`).join('');
 }
 
 // ============================================
@@ -2075,6 +2265,12 @@ function loadTimezones() {
   renderTimezones();
 }
 
+// timezones is an array of IANA zone strings; optional labels live in timezoneLabels
+let timezoneLabels = JSON.parse(localStorage.getItem('timezoneLabels') || '{}');
+function tzDisplayName(tz) {
+  return timezoneLabels[tz] || timezoneNames[tz] || tz.split('/').pop().replace(/_/g, ' ');
+}
+
 function renderTimezones() {
   const container = document.getElementById('timezoneList');
   container.innerHTML = '';
@@ -2084,7 +2280,7 @@ function renderTimezones() {
     item.className = 'timezone-item';
     item.innerHTML = `
       <div class="timezone-info">
-        <div class="timezone-city">${timezoneNames[tz] || tz}</div>
+        <div class="timezone-city">${esc(tzDisplayName(tz))}</div>
         <div class="timezone-time" id="tz-time-${index}">--:--:--</div>
         <div class="timezone-date" id="tz-date-${index}">---</div>
       </div>
@@ -2098,6 +2294,9 @@ function renderTimezones() {
 
 function updateClocks() {
   const now = new Date();
+
+  document.getElementById('localTime').textContent = now.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' });
+  document.getElementById('localDate').textContent = now.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
 
   timezones.forEach((tz, index) => {
     try {
@@ -2126,8 +2325,17 @@ function updateClocks() {
   });
 }
 
+function populateTimezoneList() {
+  const list = document.getElementById('timezoneOptions');
+  const zones = Intl.supportedValuesOf ? Intl.supportedValuesOf('timeZone') : Object.keys(timezoneNames);
+  list.innerHTML = zones.map(z => `<option value="${z}">${esc(timezoneNames[z] || '')}</option>`).join('');
+}
+
 function openTimezoneModal() {
+  document.getElementById('timezoneInput').value = '';
+  document.getElementById('timezoneLabel').value = '';
   document.getElementById('timezoneModal').classList.add('open');
+  document.getElementById('timezoneInput').focus();
 }
 
 function closeTimezoneModal() {
@@ -2135,14 +2343,15 @@ function closeTimezoneModal() {
 }
 
 function addTimezone() {
-  const select = document.getElementById('timezoneSelect');
-  const tz = select.value;
+  const tz = document.getElementById('timezoneInput').value.trim();
+  const label = document.getElementById('timezoneLabel').value.trim();
+  try { new Intl.DateTimeFormat('en-US', { timeZone: tz }); } catch (e) { alert('Unknown time zone: ' + tz); return; }
 
-  if (!timezones.includes(tz)) {
-    timezones.push(tz);
-    localStorage.setItem('timezones', JSON.stringify(timezones));
-    renderTimezones();
-  }
+  if (label) timezoneLabels[tz] = label; else delete timezoneLabels[tz];
+  localStorage.setItem('timezoneLabels', JSON.stringify(timezoneLabels));
+  if (!timezones.includes(tz)) timezones.push(tz);
+  localStorage.setItem('timezones', JSON.stringify(timezones));
+  renderTimezones();
 
   closeTimezoneModal();
 }
@@ -2172,6 +2381,7 @@ function renderSlideshow() {
   const container = document.getElementById('slideshowContainer');
 
   if (slideshowImages.length === 0) {
+    if (slideshowInterval) clearInterval(slideshowInterval);
     container.innerHTML = '<div class="slideshow-placeholder">Click to add images</div>';
     return;
   }
@@ -2205,6 +2415,30 @@ function startSlideshow() {
   }, 8000);
 }
 
+function openSlideshowModal() {
+  renderSlideThumbs();
+  document.getElementById('slideshowModal').classList.add('open');
+}
+
+function closeSlideshowModal() {
+  document.getElementById('slideshowModal').classList.remove('open');
+}
+
+function renderSlideThumbs() {
+  const box = document.getElementById('slideThumbs');
+  box.innerHTML = slideshowImages.length
+    ? slideshowImages.map((src, i) => `<div class="slide-thumb"><img src="${src}" alt=""><button onclick="removeSlideshowImage(${i})" title="Remove">&times;</button></div>`).join('')
+    : '<div style="grid-column:1/-1;text-align:center;color:var(--text-secondary);font-size:0.85em;padding:20px">No images yet</div>';
+}
+
+async function removeSlideshowImage(index) {
+  slideshowImages.splice(index, 1);
+  await saveToIndexedDB('images', 'slideshow', slideshowImages);
+  renderSlideThumbs();
+  renderSlideshow();
+  updateStorageInfo();
+}
+
 async function handleSlideshowUpload(event) {
   const files = Array.from(event.target.files);
   if (files.length === 0) return;
@@ -2230,6 +2464,7 @@ async function handleSlideshowUpload(event) {
   try {
     await saveToIndexedDB('images', 'slideshow', slideshowImages);
     renderSlideshow();
+    renderSlideThumbs();
     updateStorageInfo();
   } catch (e) {
     console.error('Error saving images:', e);
@@ -2286,23 +2521,92 @@ function readFileAsDataURL(file) {
 // ============================================
 // Notes
 // ============================================
+let notesTabs = [];
+let notesActive = 0;
+
 function loadNotes() {
-  const saved = localStorage.getItem('notes');
-  if (saved) {
-    document.getElementById('notesArea').value = saved;
-  }
+  notesTabs = JSON.parse(localStorage.getItem('notesTabs') || 'null') || [localStorage.getItem('notes') || ''];
+  localStorage.setItem('notesTabs', JSON.stringify(notesTabs));
+  localStorage.removeItem('notes'); // migrated into notesTabs
+  notesActive = Math.min(parseInt(localStorage.getItem('notesActive') || '0'), notesTabs.length - 1);
+  renderNotes();
 
+  const area = document.getElementById('notesArea');
   // Debounced auto-save
-  document.getElementById('notesArea').addEventListener('input', () => {
+  area.addEventListener('input', () => {
     if (saveTimeout) clearTimeout(saveTimeout);
-
-    saveTimeout = setTimeout(() => {
-      localStorage.setItem('notes', document.getElementById('notesArea').value);
-      const indicator = document.getElementById('saveIndicator');
-      indicator.classList.add('visible');
-      setTimeout(() => indicator.classList.remove('visible'), 1500);
-    }, 500);
+    saveTimeout = setTimeout(saveNotes, 500);
   });
+  area.addEventListener('blur', () => {
+    if (saveTimeout) clearTimeout(saveTimeout);
+    saveNotes();
+    document.querySelector('.notes-card').classList.remove('editing');
+    renderNotes();
+  });
+}
+
+function saveNotes() {
+  notesTabs[notesActive] = document.getElementById('notesArea').value;
+  localStorage.setItem('notesTabs', JSON.stringify(notesTabs));
+  localStorage.setItem('notesActive', notesActive);
+  const indicator = document.getElementById('saveIndicator');
+  indicator.classList.add('visible');
+  setTimeout(() => indicator.classList.remove('visible'), 1500);
+}
+
+function renderNotes() {
+  const tabs = document.getElementById('notesTabs');
+  tabs.innerHTML = notesTabs.map((t, i) => {
+    const label = (t.split('\n').find(l => l.trim()) || `Note ${i + 1}`).replace(/^- \[[ x]\] /, '').trim();
+    return `<button class="notes-tab${i === notesActive ? ' active' : ''}" onmousedown="event.preventDefault()" onclick="switchNoteTab(${i})" title="${esc(label)}">${esc(label)}</button>`;
+  }).join('');
+
+  const text = notesTabs[notesActive] || '';
+  document.getElementById('notesArea').value = text;
+  document.getElementById('notesPreview').innerHTML = text.split('\n').map((line, n) => {
+    const m = line.match(/^(\s*)- \[([ xX])\] (.*)$/);
+    if (!m) return esc(line);
+    const done = m[2] !== ' ';
+    return `${m[1]}<label class="${done ? 'done' : ''}"><input type="checkbox" data-line="${n}"${done ? ' checked' : ''}>${esc(m[3])}</label>`;
+  }).join('\n');
+}
+
+function startNotesEdit(event) {
+  if (event && event.target.type === 'checkbox') {
+    const n = +event.target.dataset.line;
+    const lines = (notesTabs[notesActive] || '').split('\n');
+    lines[n] = lines[n].replace(/^(\s*- \[)([ xX])(\])/, (_, a, c, b) => a + (c === ' ' ? 'x' : ' ') + b);
+    document.getElementById('notesArea').value = lines.join('\n');
+    saveNotes();
+    renderNotes();
+    return;
+  }
+  document.querySelector('.notes-card').classList.add('editing');
+  document.getElementById('notesArea').focus();
+}
+
+function switchNoteTab(i) {
+  if (document.querySelector('.notes-card').classList.contains('editing')) saveNotes();
+  notesActive = i;
+  localStorage.setItem('notesActive', i);
+  renderNotes();
+}
+
+function addNoteTab() {
+  notesTabs.push('');
+  switchNoteTab(notesTabs.length - 1);
+  saveNotes();
+  startNotesEdit();
+}
+
+function deleteNoteTab() {
+  if (notesTabs[notesActive].trim() && !confirm('Delete this note?')) return;
+  notesTabs.splice(notesActive, 1);
+  if (!notesTabs.length) notesTabs.push('');
+  notesActive = Math.min(notesActive, notesTabs.length - 1);
+  localStorage.setItem('notesTabs', JSON.stringify(notesTabs));
+  localStorage.setItem('notesActive', notesActive);
+  renderNotes();
 }
 
 // ============================================
@@ -2341,15 +2645,18 @@ function switchNewsFeed(feed, btn) {
 
 async function fetchNews(feed) {
   const newsContent = document.getElementById('newsContent');
-  newsContent.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-secondary)">Loading news...</div>';
 
-  // Check cache (5 min expiry)
-  const cacheKey = `news_${feed}`;
-  const cached = newsCache[cacheKey];
-  if (cached && Date.now() - cached.time < 5 * 60 * 1000) {
+  // Check cache (10 min expiry, persisted so a new tab is instant)
+  const cacheKey = `cache_news_${feed}`;
+  const cached = newsCache[cacheKey] || JSON.parse(localStorage.getItem(cacheKey) || 'null');
+  if (cached && Date.now() - cached.time < 10 * 60 * 1000) {
+    newsCache[cacheKey] = cached;
     renderNews(cached.articles);
     return;
   }
+  // Show stale articles while refreshing rather than a spinner
+  if (cached) renderNews(cached.articles);
+  else newsContent.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-secondary)">Loading news...</div>';
 
   const feeds = {
     international: [
@@ -2416,7 +2723,8 @@ async function fetchNews(feed) {
 
         if (articles && articles.length > 0) {
           newsCache[cacheKey] = { articles, time: Date.now() };
-          renderNews(articles);
+          localStorage.setItem(cacheKey, JSON.stringify(newsCache[cacheKey]));
+          if (feed === currentNewsFeed) renderNews(articles);
           return;
         }
       } catch (e) {
@@ -2443,7 +2751,8 @@ async function fetchNews(feed) {
         }));
 
         newsCache[cacheKey] = { articles, time: Date.now() };
-        renderNews(articles);
+        localStorage.setItem(cacheKey, JSON.stringify(newsCache[cacheKey]));
+        if (feed === currentNewsFeed) renderNews(articles);
         return;
       }
     } catch (e) {
@@ -2451,7 +2760,7 @@ async function fetchNews(feed) {
     }
   }
 
-  newsContent.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-secondary)">Unable to load news</div>';
+  if (!cached) newsContent.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-secondary)">Unable to load news</div>';
 }
 
 function renderNews(articles) {
@@ -2463,8 +2772,8 @@ function renderNews(articles) {
     item.className = 'news-item';
     item.href = article.url;
     item.innerHTML = `
-      <div class="news-title">${article.title}</div>
-      <div class="news-meta">${article.source} &bull; ${article.date}</div>
+      <div class="news-title">${esc(article.title)}</div>
+      <div class="news-meta">${esc(article.source)} &bull; ${esc(article.date)}</div>
     `;
     newsContent.appendChild(item);
   });
@@ -2610,31 +2919,19 @@ async function loadBackgroundImage() {
 // ============================================
 // Data Management
 // ============================================
-function exportSettings() {
-  const data = {
-    timezones,
-    emoticon: currentEmoticon,
-    notes: document.getElementById('notesArea').value,
-    quotes: JSON.parse(localStorage.getItem('userQuotes') || 'null'),
-    calcHistory: JSON.parse(localStorage.getItem('calcHistory') || '[]'),
-    chatConversations: chatConversations,
-    activeConversationId: activeConversationId,
-    llmSettings: {
-      proxyUrl: localStorage.getItem('llmProxyUrl') || '',
-      model: localStorage.getItem('llmModel') || '',
-      systemPrompt: localStorage.getItem('llmSystemPrompt') || '',
-      persona: localStorage.getItem('llmPersona') || '',
-      inputCost: localStorage.getItem('llmInputCost') || '',
-      outputCost: localStorage.getItem('llmOutputCost') || ''
-    },
-    settings: {
-      bgBlur: localStorage.getItem('bgBlur'),
-      cardOpacity: localStorage.getItem('cardOpacity'),
-      cardBlur: localStorage.getItem('cardBlur')
-    }
-  };
+// Everything in localStorage except secrets, per-device state and caches
+const LOCAL_ONLY_KEYS = new Set(['llmApiKey', 'gistToken', 'gistId', 'chatPanelPos']);
+function buildExport() {
+  const data = {};
+  for (const k of Object.keys(localStorage)) {
+    if (LOCAL_ONLY_KEYS.has(k) || k.startsWith('cache_')) continue;
+    data[k] = localStorage.getItem(k);
+  }
+  return { version: 2, exportedAt: new Date().toISOString(), localStorage: data };
+}
 
-  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+function exportSettings() {
+  const blob = new Blob([JSON.stringify(buildExport(), null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
@@ -2643,15 +2940,20 @@ function exportSettings() {
   URL.revokeObjectURL(url);
 }
 
-function importSettings(event) {
-  const file = event.target.files[0];
-  if (!file) return;
+function applyImport(data) {
+  if (data.localStorage) {
+    for (const [k, v] of Object.entries(data.localStorage)) {
+      if (!LOCAL_ONLY_KEYS.has(k)) localStorage.setItem(k, v);
+    }
+    location.reload();
+    return;
+  }
+  applyLegacyImport(data);
+  alert('Settings imported successfully!');
+}
 
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    try {
-      const data = JSON.parse(e.target.result);
-
+// Pre-v2 export files (field by field)
+function applyLegacyImport(data) {
       if (data.timezones) {
         timezones = data.timezones;
         localStorage.setItem('timezones', JSON.stringify(timezones));
@@ -2665,8 +2967,9 @@ function importSettings(event) {
       }
 
       if (data.notes) {
-        document.getElementById('notesArea').value = data.notes;
-        localStorage.setItem('notes', data.notes);
+        notesTabs[notesActive] = data.notes;
+        localStorage.setItem('notesTabs', JSON.stringify(notesTabs));
+        renderNotes();
       }
 
       if (data.quotes) {
@@ -2714,8 +3017,16 @@ function importSettings(event) {
         if (data.settings.cardOpacity) updateCardOpacity(data.settings.cardOpacity);
         if (data.settings.cardBlur) updateCardBlur(data.settings.cardBlur);
       }
+}
 
-      alert('Settings imported successfully!');
+function importSettings(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      applyImport(JSON.parse(e.target.result));
     } catch (e) {
       console.error('Error importing settings:', e);
       alert('Error importing settings. Invalid file format.');
@@ -2723,6 +3034,70 @@ function importSettings(event) {
   };
   reader.readAsText(file);
   event.target.value = '';
+}
+
+// ============================================
+// Gist Sync
+// ============================================
+const GIST_FILE = 'startpage-settings.json';
+
+function loadGistFields() {
+  document.getElementById('gistToken').value = localStorage.getItem('gistToken') || '';
+  document.getElementById('gistId').value = localStorage.getItem('gistId') || '';
+}
+
+function saveGistFields() {
+  localStorage.setItem('gistToken', document.getElementById('gistToken').value.trim());
+  localStorage.setItem('gistId', document.getElementById('gistId').value.trim());
+}
+
+async function gistRequest(method, path, body) {
+  const token = localStorage.getItem('gistToken');
+  if (!token) throw new Error('Enter a GitHub token first');
+  const res = await fetch('https://api.github.com/gists' + path, {
+    method,
+    headers: { Authorization: 'Bearer ' + token, Accept: 'application/vnd.github+json', 'Content-Type': 'application/json' },
+    body: body ? JSON.stringify(body) : undefined
+  });
+  if (!res.ok) throw new Error(`GitHub ${res.status}: ${(await res.json().catch(() => ({}))).message || res.statusText}`);
+  return res.json();
+}
+
+function setGistStatus(msg) { document.getElementById('gistStatus').textContent = msg; }
+
+async function gistPush() {
+  saveGistFields();
+  setGistStatus('Pushing…');
+  try {
+    const files = { [GIST_FILE]: { content: JSON.stringify(buildExport(), null, 2) } };
+    const id = localStorage.getItem('gistId');
+    const gist = id
+      ? await gistRequest('PATCH', '/' + id, { files })
+      : await gistRequest('POST', '', { description: 'Startpage settings', public: false, files });
+    localStorage.setItem('gistId', gist.id);
+    document.getElementById('gistId').value = gist.id;
+    setGistStatus('Pushed ' + new Date().toLocaleTimeString());
+  } catch (e) {
+    setGistStatus('Push failed: ' + e.message);
+  }
+}
+
+async function gistPull() {
+  saveGistFields();
+  const id = localStorage.getItem('gistId');
+  if (!id) { setGistStatus('Enter a Gist ID first'); return; }
+  setGistStatus('Pulling…');
+  try {
+    const gist = await gistRequest('GET', '/' + id);
+    const file = gist.files[GIST_FILE];
+    if (!file) throw new Error('Gist has no ' + GIST_FILE);
+    const content = file.truncated ? await (await fetch(file.raw_url)).text() : file.content;
+    const data = JSON.parse(content);
+    if (!confirm('Replace local settings with the gist copy? The page will reload.')) { setGistStatus(''); return; }
+    applyImport(data);
+  } catch (e) {
+    setGistStatus('Pull failed: ' + e.message);
+  }
 }
 
 async function clearAllData() {
@@ -2779,7 +3154,7 @@ document.querySelectorAll('.modal-overlay').forEach(overlay => {
   });
 });
 
-// Close settings on escape
+// Keyboard shortcuts
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') {
     if (isStreaming && chatAbortController) chatAbortController.abort();
@@ -2787,59 +3162,91 @@ document.addEventListener('keydown', (e) => {
     document.getElementById('calcPopup').classList.remove('open');
     document.querySelector('.chat-card').classList.remove('open');
     document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('open'));
+    document.activeElement?.blur();
+    return;
   }
+
+  // Everything below only when not typing somewhere and no modifier held
+  const t = e.target;
+  if (t.matches?.('input, textarea, select, [contenteditable]') || e.ctrlKey || e.metaKey || e.altKey) return;
+  if (document.querySelector('.modal-overlay.open')) return;
+
+  const search = document.getElementById('searchInput');
+  if (e.key === '/') { e.preventDefault(); search.focus(); search.select(); return; }
+  if (e.key === '?') { e.preventDefault(); document.getElementById('shortcutsModal').classList.add('open'); return; }
+  if (e.key === 'n') { e.preventDefault(); startNotesEdit(); return; }
+  if (e.key === 'c') { e.preventDefault(); toggleChat(); return; }
+  if (/^[1-9]$/.test(e.key)) {
+    const link = quickLinks[+e.key - 1];
+    if (link) { e.preventDefault(); window.location.href = link.url; }
+    return;
+  }
+  // Any other printable key starts a search
+  if (e.key.length === 1) search.focus();
 });
 
 // ============================================
 // Weather
 // ============================================
 async function loadWeather() {
-  const savedLocation = localStorage.getItem('weatherLocation');
+  const savedLocation = localStorage.getItem('weatherLocation') || '';
+  const content = document.getElementById('weatherContent');
+
+  // Cached forecast (15 min) — a new tab renders instantly, refresh happens in the background
+  const cache = JSON.parse(localStorage.getItem('cache_weather') || 'null');
+  if (cache && cache.location === savedLocation) {
+    content.innerHTML = cache.html;
+    if (Date.now() - cache.time < 15 * 60 * 1000) return;
+  }
 
   try {
-    let lat, lon, locationName;
-
-    if (savedLocation) {
-      // Use saved location - geocode it
-      const geoResponse = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(savedLocation)}&count=1`);
-      const geoData = await geoResponse.json();
-
-      if (geoData.results && geoData.results.length > 0) {
-        lat = geoData.results[0].latitude;
-        lon = geoData.results[0].longitude;
-        locationName = geoData.results[0].name;
+    // Coordinates are cached per location string so we only geocode / hit ipapi once
+    let geo = JSON.parse(localStorage.getItem('cache_geo') || 'null');
+    if (!geo || geo.location !== savedLocation) {
+      if (savedLocation) {
+        const geoResponse = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(savedLocation)}&count=1`);
+        const geoData = await geoResponse.json();
+        if (!geoData.results?.length) throw new Error('Location not found');
+        geo = { location: savedLocation, lat: geoData.results[0].latitude, lon: geoData.results[0].longitude, name: geoData.results[0].name };
       } else {
-        throw new Error('Location not found');
+        const ipResponse = await fetch('https://ipapi.co/json/');
+        const ipData = await ipResponse.json();
+        if (!ipData.latitude) throw new Error('IP lookup failed');
+        geo = { location: '', lat: ipData.latitude, lon: ipData.longitude, name: ipData.city || 'Unknown' };
       }
-    } else {
-      // Auto-detect location via IP
-      const ipResponse = await fetch('https://ipapi.co/json/');
-      const ipData = await ipResponse.json();
-      lat = ipData.latitude;
-      lon = ipData.longitude;
-      locationName = ipData.city || 'Unknown';
+      localStorage.setItem('cache_geo', JSON.stringify(geo));
     }
 
     // Fetch weather from Open-Meteo
-    const weatherResponse = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code&timezone=auto`);
+    const weatherResponse = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${geo.lat}&longitude=${geo.lon}&current=temperature_2m,weather_code&hourly=weather_code&daily=temperature_2m_max,temperature_2m_min&forecast_days=1&timezone=auto`);
     const weatherData = await weatherResponse.json();
 
     const temp = Math.round(weatherData.current.temperature_2m);
     const code = weatherData.current.weather_code;
     const icon = weatherIcons[code] || '🌡️';
     const condition = weatherConditions[code] || 'Unknown';
+    const hi = Math.round(weatherData.daily.temperature_2m_max[0]);
+    const lo = Math.round(weatherData.daily.temperature_2m_min[0]);
+    // Icon for 3 hours from now (hourly array is indexed from local midnight)
+    const hourIdx = weatherData.hourly.time.indexOf(weatherData.current.time.slice(0, 13) + ':00');
+    const laterCode = weatherData.hourly.weather_code[hourIdx + 3];
+    const later = laterCode !== undefined ? ` · +3h ${weatherIcons[laterCode] || '🌡️'}` : '';
 
-    document.getElementById('weatherContent').innerHTML = `
+    const html = `
       <div class="weather-icon">${icon}</div>
       <div class="weather-info">
         <div class="weather-temp">${temp}°C</div>
         <div class="weather-condition">${condition}</div>
-        <div class="weather-location">${locationName}</div>
+        <div class="weather-location">${esc(geo.name)}</div>
+        <div class="weather-extra">↑${hi}° ↓${lo}°${later}</div>
       </div>
     `;
+    content.innerHTML = html;
+    localStorage.setItem('cache_weather', JSON.stringify({ location: savedLocation, time: Date.now(), html }));
   } catch (e) {
     console.error('Weather error:', e);
-    document.getElementById('weatherContent').innerHTML = `
+    if (cache && cache.location === savedLocation) return; // keep showing the stale forecast
+    content.innerHTML = `
       <div class="weather-icon">⚠️</div>
       <div class="weather-info">
         <div class="weather-temp">--°C</div>
@@ -2888,7 +3295,12 @@ function renderQuickLinks() {
     const a = document.createElement('a');
     a.className = 'link-btn';
     a.href = link.url;
-    a.innerHTML = `<span class="link-icon">${link.icon}</span><span>${link.label}</span>`;
+    let icon = esc(link.icon);
+    if (!link.icon) {
+      // No emoji set: fall back to the site's favicon
+      try { icon = `<img src="https://icons.duckduckgo.com/ip3/${new URL(link.url).hostname}.ico" alt="" onerror="this.replaceWith('🔗')">`; } catch (e) { icon = '🔗'; }
+    }
+    a.innerHTML = `<span class="link-icon">${icon}</span><span>${esc(link.label)}</span>`;
     grid.appendChild(a);
   });
 }
@@ -2911,9 +3323,9 @@ function renderLinksEditor() {
     const row = document.createElement('div');
     row.style.cssText = 'display:flex;gap:8px;margin-bottom:8px;align-items:center';
     row.innerHTML = `
-      <input type="text" value="${link.icon}" style="width:40px;padding:8px;text-align:center;font-size:1.1em;background:rgba(255,255,255,0.05);border:1px solid var(--card-border);border-radius:6px;color:var(--text-primary)" onchange="updateEditingLink(${index}, 'icon', this.value)">
-      <input type="text" value="${link.label}" placeholder="Label" style="flex:1;padding:8px;font-family:inherit;font-size:0.85em;background:rgba(255,255,255,0.05);border:1px solid var(--card-border);border-radius:6px;color:var(--text-primary)" onchange="updateEditingLink(${index}, 'label', this.value)">
-      <input type="text" value="${link.url}" placeholder="URL" style="flex:2;padding:8px;font-family:inherit;font-size:0.85em;background:rgba(255,255,255,0.05);border:1px solid var(--card-border);border-radius:6px;color:var(--text-primary)" onchange="updateEditingLink(${index}, 'url', this.value)">
+      <input type="text" value="${esc(link.icon)}" placeholder="🔗" title="Emoji, or leave empty to use the site's favicon" style="width:40px;padding:8px;text-align:center;font-size:1.1em;background:rgba(255,255,255,0.05);border:1px solid var(--card-border);border-radius:6px;color:var(--text-primary)" onchange="updateEditingLink(${index}, 'icon', this.value)">
+      <input type="text" value="${esc(link.label)}" placeholder="Label" style="flex:1;padding:8px;font-family:inherit;font-size:0.85em;background:rgba(255,255,255,0.05);border:1px solid var(--card-border);border-radius:6px;color:var(--text-primary)" onchange="updateEditingLink(${index}, 'label', this.value)">
+      <input type="text" value="${esc(link.url)}" placeholder="URL" style="flex:2;padding:8px;font-family:inherit;font-size:0.85em;background:rgba(255,255,255,0.05);border:1px solid var(--card-border);border-radius:6px;color:var(--text-primary)" onchange="updateEditingLink(${index}, 'url', this.value)">
       <button onclick="removeEditingLink(${index})" style="padding:8px;background:rgba(239,68,68,0.2);border:1px solid rgba(239,68,68,0.3);border-radius:6px;color:var(--text-primary);cursor:pointer">&times;</button>
     `;
     editor.appendChild(row);
@@ -2930,7 +3342,7 @@ function removeEditingLink(index) {
 }
 
 function addNewLink() {
-  editingLinks.push({ icon: '🔗', label: 'New Link', url: 'https://' });
+  editingLinks.push({ icon: '', label: 'New Link', url: 'https://' });
   renderLinksEditor();
 }
 
@@ -2971,7 +3383,11 @@ function applyThemePreset(preset) {
     return;
   }
 
-  const theme = themePresets[preset];
+  let name = preset;
+  if (name === 'system') {
+    name = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  }
+  const theme = themePresets[name];
   if (!theme) return;
 
   // Apply colors
@@ -2989,11 +3405,24 @@ function applyThemePreset(preset) {
   localStorage.setItem('themeBgColor', theme.bg);
 
   localStorage.setItem('themePreset', preset);
+  document.getElementById('themeSelect').value = preset;
 }
 
 function loadThemePreset() {
-  const preset = localStorage.getItem('themePreset') || 'custom';
+  let preset = localStorage.getItem('themePreset') || 'custom';
+  if (themeMigration[preset]) {
+    preset = themeMigration[preset];
+    localStorage.setItem('themePreset', preset);
+  }
   document.getElementById('themeSelect').value = preset;
+
+  if (preset === 'system') {
+    applyThemePreset('system');
+    matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+      if (localStorage.getItem('themePreset') === 'system') applyThemePreset('system');
+    });
+    return;
+  }
 
   // Load background color if set
   const bgColor = localStorage.getItem('themeBgColor');
