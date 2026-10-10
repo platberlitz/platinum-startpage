@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Startpage</title>
+<link rel="icon" href="assets/xp-cat.svg" type="image/svg+xml">
 <style>
 /* CSS Variables for theming */
 :root {
@@ -1389,24 +1390,71 @@ input[type="file"] {
   }
 }
 </style>
+<link rel="stylesheet" href="xp-desktop.css">
 </head>
 <body>
 
-<div class="main-container">
+<svg class="icon-definitions" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <defs>
+    <linearGradient id="folderGold" x2="0" y2="1"><stop stop-color="#f6dfa0"/><stop offset="1" stop-color="#bc914a"/></linearGradient>
+    <linearGradient id="screenBlue" x2="0" y2="1"><stop stop-color="#8ac8d5"/><stop offset="1" stop-color="#386979"/></linearGradient>
+    <symbol id="icon-search" viewBox="0 0 32 32"><path d="m19 20 9 9" stroke="#a48650" stroke-width="7"/><path d="m20 20 8 8" stroke="#edcf88" stroke-width="3"/><circle cx="13" cy="13" r="10" fill="url(#screenBlue)" stroke="#c9dbce" stroke-width="2"/><path d="M7 13a6 6 0 0 1 6-6" fill="none" stroke="#e8f0da" stroke-width="2"/></symbol>
+    <symbol id="icon-links" viewBox="0 0 32 32"><path d="M2 8h11l3 4h14v17H2Z" fill="#b28b46" stroke="#6b592f"/><path d="M3 13h27l-3 16H1Z" fill="url(#folderGold)" stroke="#886d37"/><path d="M5 16h21" stroke="#f9e9b9"/></symbol>
+    <symbol id="icon-notes" viewBox="0 0 32 32"><path d="M6 2h22v28H6Z" fill="#efebce" stroke="#838b65"/><path d="M10 8h13M10 13h13M10 18h10M10 23h8" stroke="#97b5bd"/><path d="m19 25 7-18 4 2-7 18-5 3Z" fill="#dcb45c" stroke="#876a37"/><path d="m19 25-1 5 5-3" fill="#586149"/></symbol>
+    <symbol id="icon-weather" viewBox="0 0 32 32"><circle cx="13" cy="12" r="7" fill="#efd083" stroke="#b8974e"/><path d="M13 1v3m0 16v3M2 12h3m16 0h3M5 4l3 3m10 10 3 3M4 20l3-3M19 5l3-3" stroke="#efd083" stroke-width="2"/><path d="M10 27a5 5 0 0 1 0-10 7 7 0 0 1 13-1 5 5 0 0 1 2 11Z" fill="#d7e2d8" stroke="#849fa5"/></symbol>
+    <symbol id="icon-timezones" viewBox="0 0 32 32"><circle cx="16" cy="16" r="13" fill="url(#screenBlue)" stroke="#c5d8c0"/><path d="m9 5 4 5-4 4 2 5 5 1 2 8m1-24-1 8 8 3-5 7" fill="#94b76f" stroke="#50794b"/><circle cx="23" cy="23" r="8" fill="#f1edd6" stroke="#6b774e"/><path d="M23 17v6l4 2" fill="none" stroke="#41513b" stroke-width="2"/></symbol>
+    <symbol id="icon-slideshow" viewBox="0 0 32 32"><path d="m3 6 24-3 3 24-24 3Z" fill="#e4e8ce" stroke="#879879"/><path d="M5 6h24v23H5Z" fill="#e9e8ce" stroke="#7f8c6d"/><path d="M8 9h18v17H8Z" fill="url(#screenBlue)"/><circle cx="21" cy="13" r="3" fill="#f1d889"/><path d="m8 24 6-9 6 7 3-5 3 9H8Z" fill="#709551"/></symbol>
+    <symbol id="icon-news" viewBox="0 0 32 32"><path d="M4 4h22v24H6l-3-3V9h4" fill="#e9e8d4" stroke="#88947b"/><path d="M8 8h14v4H8Z" fill="#637e9c"/><path d="M8 16h6v8H8Z" fill="#a6b793"/><path d="M17 16h6m-6 4h6m-6 4h6" stroke="#7b8777"/></symbol>
+  </defs>
+</svg>
+
+<header class="desktop-taskbar" aria-label="Desktop taskbar">
+  <button class="start-button" id="startButton" onclick="toggleStartMenu()" aria-expanded="false" aria-controls="startMenu"><img src="assets/xp-cat.svg" alt="">start</button>
+  <button class="show-desktop" onclick="toggleDesktop()" title="Show desktop" aria-label="Show desktop"><svg class="xp-icon"><use href="#icon-slideshow"/></svg></button>
+  <nav class="task-buttons" id="taskButtons" aria-label="Windows"></nav>
+  <div class="taskbar-tools">
+    <button class="chat-toggle-btn" onclick="toggleChat()" title="AI chat (C)" aria-label="AI chat" aria-controls="chatPanel" aria-expanded="false">☏</button>
+    <button class="calc-btn" onclick="toggleCalculator()" title="Calculator" aria-label="Calculator" aria-controls="calcPopup" aria-expanded="false">▦</button>
+    <button class="settings-btn" onclick="toggleSettings()" title="Settings" aria-label="Settings" aria-controls="settingsPanel" aria-expanded="false">⚙</button>
+  </div>
+  <div class="search-clock taskbar-clock"><span class="search-clock-time" id="localTime">--:--</span><span class="search-clock-date" id="localDate"></span></div>
+</header>
+
+<section class="start-menu" id="startMenu" aria-label="Start menu" hidden>
+  <div class="start-user"><img src="assets/xp-cat.svg" alt=""><strong>My desktop</strong></div>
+  <div class="start-menu-columns">
+    <div id="startApps" class="start-apps"></div>
+    <div class="start-utilities">
+      <button onclick="launchUtility('chat')">AI chat</button>
+      <button onclick="launchUtility('calculator')">Calculator</button>
+      <hr>
+      <button onclick="launchUtility('settings')">Settings</button>
+      <button onclick="launchUtility('layout')">Arrange windows</button>
+      <button onclick="launchUtility('shortcuts')">Keyboard shortcuts</button>
+    </div>
+  </div>
+  <div class="start-menu-footer"><span>Windows XP Olive</span><button onclick="toggleDesktop(); toggleStartMenu(false)">Show desktop</button></div>
+</section>
+
+<nav class="desktop-shortcuts" id="desktopShortcuts" aria-label="Desktop shortcuts"></nav>
+
+<main class="main-container" aria-label="Desktop windows">
   <div class="grid">
     <!-- Search Card -->
     <div class="card search-card">
+      <div class="card-header"><span class="card-title"><svg class="xp-icon"><use href="#icon-search"/></svg>Internet Search</span><button class="window-minimise" onclick="minimiseWindow('search')" aria-label="Minimise search">_</button></div>
+      <div class="window-toolbar"><span>Search the web</span><button onclick="launchUtility('shortcuts')">Keyboard shortcuts</button></div>
       <form class="search-form" onsubmit="handleSearch(event)">
-        <div class="search-clock"><span class="search-clock-time" id="localTime">--:--</span><span class="search-clock-date" id="localDate"></span></div>
-        <input type="text" id="searchInput" class="search-input" placeholder="Search the web...  (!g !yt !w !gh !r  ·  ? for shortcuts)" autofocus>
-        <button type="submit" class="search-btn">Search</button>
+        <label for="searchInput" class="search-label">Address</label>
+        <input type="text" id="searchInput" class="search-input" placeholder="Search or use !g, !yt, !w, !gh..." autofocus>
+        <button type="submit" class="search-btn">Go <span aria-hidden="true">➜</span></button>
       </form>
     </div>
 
     <!-- Weather Card -->
     <div class="card weather-card">
       <div class="card-header">
-        <span class="card-title">Weather</span>
+        <span class="card-title"><svg class="xp-icon"><use href="#icon-weather"/></svg>Weather</span>
         <button class="add-btn" onclick="openWeatherModal()">Edit</button>
       </div>
       <div class="weather-content" id="weatherContent">
@@ -1422,7 +1470,7 @@ input[type="file"] {
     <!-- Timezone Card -->
     <div class="card timezone-card">
       <div class="card-header">
-        <span class="card-title">World Clocks</span>
+        <span class="card-title"><svg class="xp-icon"><use href="#icon-timezones"/></svg>World Clocks</span>
         <button class="add-btn" onclick="openTimezoneModal()">+ Add</button>
       </div>
       <div class="timezone-list" id="timezoneList"></div>
@@ -1431,7 +1479,7 @@ input[type="file"] {
     <!-- Quick Links Card -->
     <div class="card links-card">
       <div class="card-header">
-        <span class="card-title">Quick Links</span>
+        <span class="card-title"><svg class="xp-icon"><use href="#icon-links"/></svg>Favourites</span>
         <button class="add-btn" onclick="openLinksModal()">Edit</button>
       </div>
       <div class="links-grid" id="linksGrid"></div>
@@ -1439,11 +1487,9 @@ input[type="file"] {
 
     <!-- Slideshow Card -->
     <div class="card slideshow-card">
+      <div class="card-header"><span class="card-title"><svg class="xp-icon"><use href="#icon-slideshow"/></svg>My Pictures</span><button class="add-btn" onclick="openSlideshowModal()">Manage</button></div>
       <div class="slideshow-container" id="slideshowContainer">
-        <div class="slideshow-placeholder">Click to add images</div>
-      </div>
-      <div class="slideshow-overlay" onclick="openSlideshowModal()">
-        <span>Click to manage images</span>
+        <div class="slideshow-placeholder"><svg class="xp-icon"><use href="#icon-slideshow"/></svg><span>Your pictures, on your desktop</span><button class="btn" onclick="openSlideshowModal()">Add pictures</button></div>
       </div>
       <input type="file" id="slideshowInput" accept="image/*" multiple style="display:none" onchange="handleSlideshowUpload(event)">
     </div>
@@ -1451,19 +1497,21 @@ input[type="file"] {
     <!-- Notes Card -->
     <div class="card notes-card">
       <div class="card-header">
-        <div class="notes-tabs" id="notesTabs"></div>
+        <span class="card-title"><svg class="xp-icon"><use href="#icon-notes"/></svg>Notepad</span>
         <div style="display:flex;gap:4px;flex-shrink:0">
           <button class="add-btn" onclick="addNoteTab()" title="New note">+</button>
           <button class="add-btn" onclick="deleteNoteTab()" title="Delete this note">&times;</button>
         </div>
       </div>
-      <div class="notes-preview" id="notesPreview" onclick="startNotesEdit(event)"></div>
-      <textarea class="notes-textarea" id="notesArea" placeholder="Write your notes here... (- [ ] makes a checkbox)"></textarea>
+      <div class="notes-tabs" id="notesTabs"></div>
+      <div class="notes-preview" id="notesPreview" onclick="startNotesEdit(event)" tabindex="0" role="group" aria-label="Note preview. Press Enter to edit" onkeydown="if(event.target === this && (event.key === 'Enter' || event.key === ' ')) {event.preventDefault(); startNotesEdit();}"></div>
+      <textarea class="notes-textarea" id="notesArea" aria-label="Note text" placeholder="Write your notes here... (- [ ] makes a checkbox)"></textarea>
       <div class="save-indicator" id="saveIndicator">Saved</div>
     </div>
 
     <!-- News Card -->
     <div class="card news-card">
+      <div class="card-header"><span class="card-title"><svg class="xp-icon"><use href="#icon-news"/></svg>News</span></div>
       <div class="news-tabs">
         <button class="news-tab active" data-feed="international" onclick="switchNewsFeed('international', this)">International</button>
         <button class="news-tab" data-feed="philippines" onclick="switchNewsFeed('philippines', this)">Philippines</button>
@@ -1474,25 +1522,26 @@ input[type="file"] {
     </div>
 
     <!-- Emoticon Card -->
-    <div class="card emoticon-card" id="emoticonCard" onclick="cycleEmoticon()">:3</div>
+    <button class="card emoticon-card" id="emoticonCard" onclick="cycleEmoticon()" title="Change emoticon" aria-label="Change emoticon">:3</button>
 
     <!-- Quote Card -->
     <div class="card quote-card">
       <div class="quote-text" id="quoteText">Loading...</div>
     </div>
   </div>
-</div>
+</main>
 
 <!-- Chat Panel (floating) -->
-<div class="chat-card">
+<div class="chat-card" id="chatPanel" role="region" aria-label="AI chat">
   <div class="card-header">
-    <select class="chat-conv-select" id="chatConvSelect" onchange="switchConversation(this.value)"></select>
+    <select class="chat-conv-select" id="chatConvSelect" aria-label="Chat conversation" onchange="switchConversation(this.value)"></select>
     <div class="chat-header-actions">
       <button class="add-btn" onclick="createConversation()" title="New Chat">+</button>
       <button class="add-btn" onclick="exportConversation()" title="Export Chat">&#8615;</button>
       <button class="add-btn" onclick="document.getElementById('chatImportInput').click()" title="Import Chat">&#8613;</button>
       <input type="file" id="chatImportInput" accept=".json,.md" style="display:none" onchange="importConversation(event)">
       <button class="add-btn" onclick="clearChat()" title="Clear Chat">Clear</button>
+      <button class="window-close" onclick="toggleChat()" aria-label="Close chat">×</button>
     </div>
   </div>
   <div class="chat-messages" id="chatMessages">
@@ -1502,42 +1551,34 @@ input[type="file"] {
   <div class="chat-input-row">
     <button class="chat-attach-btn" onclick="document.getElementById('chatFileInput').click()" title="Attach image">&#128206;</button>
     <input type="file" id="chatFileInput" accept="image/*" multiple style="display:none" onchange="handleChatFileSelect(event)">
-    <input type="text" class="chat-input" id="chatInput" placeholder="Type a question...">
+    <input type="text" class="chat-input" id="chatInput" aria-label="Chat message" placeholder="Type a question...">
     <button class="chat-voice-btn" id="chatVoiceBtn" onclick="toggleVoiceInput()" title="Voice input">&#127908;</button>
     <button class="chat-send-btn" id="chatSendBtn" onclick="sendChatMessage()">Send</button>
   </div>
   <div class="chat-token-info" id="chatTokenInfo"></div>
 </div>
 
-<!-- Chat Toggle Button -->
-<button class="chat-toggle-btn" onclick="toggleChat()" title="Ask AI">💬</button>
-
-<!-- Calculator Button -->
-<button class="calc-btn" onclick="toggleCalculator()" title="Calculator">=</button>
-
 <!-- Calculator Popup -->
 <div class="calc-popup" id="calcPopup">
-  <input type="text" class="calc-input" id="calcInput" placeholder="e.g. 2+3*4" autocomplete="off">
+  <div class="card-header"><span class="card-title">Calculator</span><button class="window-close" onclick="toggleCalculator()" aria-label="Close calculator">×</button></div>
+  <input type="text" class="calc-input" id="calcInput" aria-label="Calculation" placeholder="e.g. 2+3*4" autocomplete="off">
   <div class="calc-result" id="calcResult"></div>
   <div class="calc-history" id="calcHistory"></div>
 </div>
 
-<!-- Settings Button -->
-<button class="settings-btn" onclick="toggleSettings()">&#9881;</button>
-
 <!-- Settings Panel -->
-<div class="settings-panel" id="settingsPanel">
+<div class="settings-panel" id="settingsPanel" role="region" aria-label="Settings" inert>
   <div class="settings-header">
     <span class="settings-title">Settings</span>
-    <button class="close-btn" onclick="toggleSettings()">&times;</button>
+    <button class="close-btn" onclick="toggleSettings()" aria-label="Close settings">&times;</button>
   </div>
 
   <div class="settings-section">
     <div class="section-title">Background</div>
-    <input type="file" accept="image/*" onchange="handleBackgroundUpload(event)">
+    <input type="file" accept="image/*" aria-label="Background picture" onchange="handleBackgroundUpload(event)">
     <div class="slider-container" style="margin-top:16px">
       <div class="slider-header">
-        <span class="setting-label">Blur Amount</span>
+        <label class="setting-label" for="blurSlider">Blur amount</label>
         <span class="slider-value" id="blurValue">0px</span>
       </div>
       <input type="range" id="blurSlider" min="0" max="30" value="0" oninput="updateBlur(this.value)">
@@ -1549,42 +1590,43 @@ input[type="file"] {
     <div class="setting-row">
       <span class="setting-label">Font Size</span>
       <div class="font-size-controls">
-        <button class="font-size-btn" onclick="adjustFontSize(-10)">−</button>
+        <button class="font-size-btn" onclick="adjustFontSize(-10)" aria-label="Decrease font size">−</button>
         <span class="font-size-value" id="fontSizeValue">100%</span>
-        <button class="font-size-btn" onclick="adjustFontSize(10)">+</button>
+        <button class="font-size-btn" onclick="adjustFontSize(10)" aria-label="Increase font size">+</button>
       </div>
     </div>
     <div class="setting-row">
-      <span class="setting-label">Card Color</span>
-      <input type="color" id="cardColorPicker" value="#1e1e23" onchange="updateCardColor(this.value)">
+      <label class="setting-label" for="cardColorPicker">Card colour</label>
+      <input type="color" id="cardColorPicker" value="#252c20" onchange="updateCardColor(this.value)">
     </div>
     <div class="setting-row">
-      <span class="setting-label">Accent Color</span>
-      <input type="color" id="accentColorPicker" value="#6366f1" onchange="updateAccentColor(this.value)">
+      <label class="setting-label" for="accentColorPicker">Accent colour</label>
+      <input type="color" id="accentColorPicker" value="#b7ca8b" onchange="updateAccentColor(this.value)">
     </div>
     <div class="setting-row">
-      <span class="setting-label">Font Color</span>
-      <input type="color" id="fontColorPicker" value="#ffffff" onchange="updateFontColor(this.value)">
+      <label class="setting-label" for="fontColorPicker">Font colour</label>
+      <input type="color" id="fontColorPicker" value="#eeeedd" onchange="updateFontColor(this.value)">
     </div>
     <div class="slider-container">
       <div class="slider-header">
-        <span class="setting-label">Card Opacity</span>
-        <span class="slider-value" id="cardOpacityValue">85%</span>
+        <label class="setting-label" for="cardOpacitySlider">Card opacity</label>
+        <span class="slider-value" id="cardOpacityValue">97%</span>
       </div>
-      <input type="range" id="cardOpacitySlider" min="0" max="100" value="85" oninput="updateCardOpacity(this.value)">
+      <input type="range" id="cardOpacitySlider" min="0" max="100" value="97" oninput="updateCardOpacity(this.value)">
     </div>
     <div class="slider-container">
       <div class="slider-header">
-        <span class="setting-label">Card Blur</span>
-        <span class="slider-value" id="cardBlurValue">12px</span>
+        <label class="setting-label" for="cardBlurSlider">Card blur</label>
+        <span class="slider-value" id="cardBlurValue">0px</span>
       </div>
-      <input type="range" id="cardBlurSlider" min="0" max="30" value="12" oninput="updateCardBlur(this.value)">
+      <input type="range" id="cardBlurSlider" min="0" max="30" value="0" oninput="updateCardBlur(this.value)">
     </div>
   </div>
 
   <div class="settings-section">
     <div class="section-title">Theme Presets</div>
-    <select class="theme-select" id="themeSelect" onchange="applyThemePreset(this.value)">
+    <select class="theme-select" id="themeSelect" aria-label="Theme preset" onchange="applyThemePreset(this.value)">
+      <option value="xpOlive">Windows XP Olive</option>
       <option value="system">System (Auto)</option>
       <optgroup label="Classic">
         <option value="dark">Dark</option>
@@ -1632,8 +1674,8 @@ input[type="file"] {
 
   <div class="settings-section">
     <div class="section-title">Layout</div>
-    <button class="btn btn-block" onclick="openLayoutModal()">Customize Layout</button>
-    <p style="font-size:0.75em;color:var(--text-secondary);margin-top:8px">Rearrange which cards appear in which grid positions</p>
+    <button class="btn btn-block" onclick="openLayoutModal()">Arrange windows</button>
+    <p style="font-size:0.75em;color:var(--text-secondary);margin-top:8px">Choose where each window appears on your desktop.</p>
   </div>
 
   <div class="settings-section">
@@ -1778,34 +1820,36 @@ input[type="file"] {
 <!-- Layout Modal -->
 <div class="modal-overlay" id="layoutModal">
   <div class="modal" style="max-width:450px">
-    <div class="modal-title">Customize Layout</div>
-    <p style="font-size:0.75em;color:var(--text-secondary);margin-bottom:16px">Pick which card goes in each position</p>
+    <div class="modal-title">Arrange windows</div>
+    <p style="font-size:0.75em;color:var(--text-secondary);margin-bottom:16px">Choose a window for each position below Search.</p>
     <div class="layout-editor">
       <div class="layout-row">
         <div class="layout-cell">
-          <label>Row 2, Col 1</label>
+          <label for="layout-r2c1">Top left</label>
           <select id="layout-r2c1" onchange="validateLayoutSelection()"></select>
         </div>
         <div class="layout-cell">
-          <label>Row 2, Col 2</label>
+          <label for="layout-r2c2">Top right</label>
           <select id="layout-r2c2" onchange="validateLayoutSelection()"></select>
-        </div>
-        <div class="layout-cell">
-          <label>Row 2, Col 3</label>
-          <select id="layout-r2c3" onchange="validateLayoutSelection()"></select>
         </div>
       </div>
       <div class="layout-row">
         <div class="layout-cell">
-          <label>Row 3, Col 1</label>
-          <select id="layout-r3c1" onchange="validateLayoutSelection()"></select>
+          <label for="layout-r2c3">Middle left</label>
+          <select id="layout-r2c3" onchange="validateLayoutSelection()"></select>
         </div>
         <div class="layout-cell">
-          <label>Row 3, Col 2</label>
+          <label for="layout-r3c1">Middle right</label>
+          <select id="layout-r3c1" onchange="validateLayoutSelection()"></select>
+        </div>
+      </div>
+      <div class="layout-row">
+        <div class="layout-cell">
+          <label for="layout-r3c2">Bottom left</label>
           <select id="layout-r3c2" onchange="validateLayoutSelection()"></select>
         </div>
         <div class="layout-cell">
-          <label>Row 3, Col 3</label>
+          <label for="layout-r3c3">Bottom right</label>
           <select id="layout-r3c3" onchange="validateLayoutSelection()"></select>
         </div>
       </div>
@@ -1920,16 +1964,16 @@ const defaultQuotes = [
 // Grid Layout Customization
 // ============================================
 const defaultLayout = {
-  row2: ['weather', 'timezones', 'links'],
-  row3: ['slideshow', 'notes', 'news']
+  row2: ['links', 'timezones', 'notes'],
+  row3: ['weather', 'news', 'slideshow']
 };
 
 const cardNames = {
   weather: 'Weather',
-  timezones: 'Timezones',
-  links: 'Quick Links',
-  slideshow: 'Slideshow',
-  notes: 'Notes',
+  timezones: 'World Clocks',
+  links: 'Favourites',
+  slideshow: 'My Pictures',
+  notes: 'Notepad',
   news: 'News'
 };
 
@@ -1941,13 +1985,11 @@ function loadGridLayout() {
 
 function applyGridLayout(layout) {
   const grid = document.querySelector('.grid');
-  const areas = `
-    "search search search"
-    "${layout.row2.join(' ')}"
-    "${layout.row3.join(' ')}"
-    "emoticon quote quote"
-  `;
-  grid.style.gridTemplateAreas = areas;
+  const cards = [...layout.row2, ...layout.row3];
+  const rows = matchMedia('(max-width: 600px)').matches
+    ? ['search', ...cards, 'emoticon', 'quote']
+    : ['search search', ...[0, 2, 4].map(i => cards.slice(i, i + 2).join(' ')), 'emoticon quote'];
+  grid.style.gridTemplateAreas = rows.map(row => `"${row}"`).join(' ');
 }
 
 function openLayoutModal() {
@@ -2064,6 +2106,7 @@ const defaultQuickLinks = [
 ];
 
 const themePresets = {
+  xpOlive:        { bg: '#161d13', card: '#252c20', accent: '#b7ca8b', font: '#eeeedd' },
   dark:           { bg: '#0a0a0f', card: '#1e1e23', accent: '#6366f1', font: '#f2f2f2' },
   light:          { bg: '#f5f5f7', card: '#ffffff', accent: '#6366f1', font: '#1a1a1a' },
   nord:           { bg: '#2e3440', card: '#3b4252', accent: '#88c0d0', font: '#eceff4' },
@@ -2176,6 +2219,7 @@ const timezoneNames = {
 // ============================================
 document.addEventListener('DOMContentLoaded', async () => {
   await openDatabase();
+  initialiseDesktop();
   loadSettings();
   loadGridLayout();
   loadTimezones();
@@ -2382,7 +2426,7 @@ function renderSlideshow() {
 
   if (slideshowImages.length === 0) {
     if (slideshowInterval) clearInterval(slideshowInterval);
-    container.innerHTML = '<div class="slideshow-placeholder">Click to add images</div>';
+    container.innerHTML = '<div class="slideshow-placeholder"><svg class="xp-icon" aria-hidden="true"><use href="#icon-slideshow"/></svg><span>Your pictures, on your desktop</span><button class="btn" onclick="openSlideshowModal()">Add pictures</button></div>';
     return;
   }
 
@@ -2581,6 +2625,7 @@ function startNotesEdit(event) {
     renderNotes();
     return;
   }
+  restoreWindow('notes', false);
   document.querySelector('.notes-card').classList.add('editing');
   document.getElementById('notesArea').focus();
 }
@@ -2783,7 +2828,10 @@ function renderNews(articles) {
 // Settings
 // ============================================
 function toggleSettings() {
-  document.getElementById('settingsPanel').classList.toggle('open');
+  const panel = document.getElementById('settingsPanel');
+  const open = panel.classList.toggle('open');
+  panel.inert = !open;
+  if (open) panel.querySelector('.close-btn').focus();
 }
 
 function loadSettings() {
@@ -2800,28 +2848,28 @@ function loadSettings() {
   document.documentElement.style.setProperty('--bg-blur', blur + 'px');
 
   // Card color
-  const cardColor = localStorage.getItem('cardColor') || '#1e1e23';
+  const cardColor = localStorage.getItem('cardColor') || '#252c20';
   document.getElementById('cardColorPicker').value = cardColor;
   updateCardColor(cardColor, false);
 
   // Accent color
-  const accentColor = localStorage.getItem('accentColor') || '#6366f1';
+  const accentColor = localStorage.getItem('accentColor') || '#b7ca8b';
   document.getElementById('accentColorPicker').value = accentColor;
   updateAccentColor(accentColor, false);
 
   // Font color
-  const fontColor = localStorage.getItem('fontColor') || '#ffffff';
+  const fontColor = localStorage.getItem('fontColor') || '#eeeedd';
   document.getElementById('fontColorPicker').value = fontColor;
   updateFontColor(fontColor, false);
 
   // Card opacity
-  const cardOpacity = localStorage.getItem('cardOpacity') || '85';
+  const cardOpacity = localStorage.getItem('cardOpacity') || '97';
   document.getElementById('cardOpacitySlider').value = cardOpacity;
   document.getElementById('cardOpacityValue').textContent = cardOpacity + '%';
   applyCardBg();
 
   // Card blur
-  const cardBlur = localStorage.getItem('cardBlur') || '12';
+  const cardBlur = localStorage.getItem('cardBlur') || '0';
   document.getElementById('cardBlurSlider').value = cardBlur;
   document.getElementById('cardBlurValue').textContent = cardBlur + 'px';
   document.documentElement.style.setProperty('--card-blur', cardBlur + 'px');
@@ -2841,6 +2889,7 @@ function updateCardColor(hex, save = true) {
   document.documentElement.style.setProperty('--card-base-r', r);
   document.documentElement.style.setProperty('--card-base-g', g);
   document.documentElement.style.setProperty('--card-base-b', b);
+  document.documentElement.style.setProperty('--surface', hex);
   if (save) localStorage.setItem('cardColor', hex);
   applyCardBg();
 }
@@ -2861,7 +2910,7 @@ function updateFontColor(hex, save = true) {
   const r = parseInt(hex.slice(1, 3), 16);
   const g = parseInt(hex.slice(3, 5), 16);
   const b = parseInt(hex.slice(5, 7), 16);
-  document.documentElement.style.setProperty('--text-secondary', `rgba(${r}, ${g}, ${b}, 0.6)`);
+  document.documentElement.style.setProperty('--text-secondary', `rgba(${r}, ${g}, ${b}, 0.78)`);
   if (save) localStorage.setItem('fontColor', hex);
 }
 
@@ -2869,7 +2918,7 @@ function applyCardBg() {
   const r = getComputedStyle(document.documentElement).getPropertyValue('--card-base-r').trim() || 30;
   const g = getComputedStyle(document.documentElement).getPropertyValue('--card-base-g').trim() || 30;
   const b = getComputedStyle(document.documentElement).getPropertyValue('--card-base-b').trim() || 35;
-  const opacity = (localStorage.getItem('cardOpacity') || 85) / 100;
+  const opacity = (localStorage.getItem('cardOpacity') || 97) / 100;
   document.documentElement.style.setProperty('--card-bg', `rgba(${r}, ${g}, ${b}, ${opacity})`);
 }
 
@@ -3159,6 +3208,8 @@ document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') {
     if (isStreaming && chatAbortController) chatAbortController.abort();
     document.getElementById('settingsPanel').classList.remove('open');
+    document.getElementById('settingsPanel').inert = true;
+    toggleStartMenu(false);
     document.getElementById('calcPopup').classList.remove('open');
     document.querySelector('.chat-card').classList.remove('open');
     document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('open'));
@@ -3168,11 +3219,12 @@ document.addEventListener('keydown', (e) => {
 
   // Everything below only when not typing somewhere and no modifier held
   const t = e.target;
+  if (e.defaultPrevented || (e.key === ' ' && t.closest?.('button, a, [role="button"]'))) return;
   if (t.matches?.('input, textarea, select, [contenteditable]') || e.ctrlKey || e.metaKey || e.altKey) return;
   if (document.querySelector('.modal-overlay.open')) return;
 
   const search = document.getElementById('searchInput');
-  if (e.key === '/') { e.preventDefault(); search.focus(); search.select(); return; }
+  if (e.key === '/') { e.preventDefault(); restoreWindow('search'); search.select(); return; }
   if (e.key === '?') { e.preventDefault(); document.getElementById('shortcutsModal').classList.add('open'); return; }
   if (e.key === 'n') { e.preventDefault(); startNotesEdit(); return; }
   if (e.key === 'c') { e.preventDefault(); toggleChat(); return; }
@@ -3182,7 +3234,7 @@ document.addEventListener('keydown', (e) => {
     return;
   }
   // Any other printable key starts a search
-  if (e.key.length === 1) search.focus();
+  if (e.key.length === 1) { restoreWindow('search'); search.focus(); }
 });
 
 // ============================================
@@ -3363,9 +3415,6 @@ function adjustFontSize(delta) {
   document.documentElement.style.setProperty('--font-scale', current / 100);
   document.getElementById('fontSizeValue').textContent = current + '%';
 
-  // Mark theme as custom when manually adjusting
-  document.getElementById('themeSelect').value = 'custom';
-  localStorage.setItem('themePreset', 'custom');
 }
 
 function loadFontSize() {
@@ -3409,7 +3458,7 @@ function applyThemePreset(preset) {
 }
 
 function loadThemePreset() {
-  let preset = localStorage.getItem('themePreset') || 'custom';
+  let preset = localStorage.getItem('themePreset') || 'xpOlive';
   if (themeMigration[preset]) {
     preset = themeMigration[preset];
     localStorage.setItem('themePreset', preset);
@@ -3449,7 +3498,7 @@ function toggleChat() {
   let offsetX = 0, offsetY = 0;
 
   header.addEventListener('mousedown', (e) => {
-    if (e.target.closest('.add-btn')) return;
+    if (e.target.closest('button, select, input')) return;
     isDragging = true;
     offsetX = e.clientX - panel.getBoundingClientRect().left;
     offsetY = e.clientY - panel.getBoundingClientRect().top;
@@ -4414,5 +4463,6 @@ document.getElementById('chatInput').addEventListener('keydown', (e) => {
 });
 </script>
 
+<script src="xp-desktop.js"></script>
 </body>
 </html>

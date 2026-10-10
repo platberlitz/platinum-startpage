@@ -1,0 +1,436 @@
+/* Homestead colours sampled from the local HyDE Windows XP Olive theme. */
+:root {
+  color-scheme: dark;
+  --surface: #252c20;
+  --card-bg: rgb(37 44 32 / 97%);
+  --card-blur: 0px;
+  --card-border: oklch(48% 0.046 126);
+  --text-primary: #eeeedd;
+  --text-secondary: #c4c8b5;
+  --accent: #b7ca8b;
+  --accent-hover: #d5e5ad;
+  --card-base-r: 37;
+  --card-base-g: 44;
+  --card-base-b: 32;
+  --title-text: #f6f3df;
+  --olive-dark: #202919;
+  --olive-light: #687b50;
+  --title-bar: linear-gradient(#879868 0%, #637b47 7%, #526b38 16%, #445a30 78%, #384b26 96%, #718354);
+  --button-face: linear-gradient(#53633d, #3f4d30 45%, #354228);
+  --button-hover: linear-gradient(#687d4b, #4c6035);
+  --bevel: inset 1px 1px #687b50, inset -1px -1px #29341e;
+  --field: color-mix(in oklch, var(--surface), oklch(13% 0.015 128) 32%);
+}
+
+body {
+  display: flow-root;
+  font-family: Tahoma, 'Liberation Sans', Arial, sans-serif;
+  background: #161d13 url('assets/cat-bliss-night.webp') center / cover fixed no-repeat;
+  height: 100dvh;
+}
+
+body::before { background: rgb(13 23 22 / 8%); }
+button, input, select, textarea { font-family: inherit; }
+button, a, input, select, textarea { -webkit-tap-highlight-color: transparent; }
+button { touch-action: manipulation; }
+button:focus-visible, a:focus-visible, [tabindex]:focus-visible {
+  outline: 2px solid var(--accent-hover);
+  outline-offset: 2px;
+}
+::selection { background: #526b38; color: #f6f3df; }
+[hidden] { display: none !important; }
+.icon-definitions { position: absolute; width: 0; height: 0; overflow: hidden; }
+.xp-icon { width: 20px; height: 20px; flex-shrink: 0; vertical-align: middle; }
+
+/* The taskbar stays at the top, matching the desktop. */
+.desktop-taskbar {
+  position: fixed;
+  inset: 0 0 auto;
+  height: 37px;
+  z-index: 180;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--title-text);
+  background: linear-gradient(#596a42 0%, #3d4a2e 9%, #303b25 18%, #303a27 82%, #222a1c);
+  border-bottom: 1px solid #151c11;
+  box-shadow: inset 0 1px #687b50, 0 2px 6px rgb(14 20 12 / 35%);
+}
+
+.start-button {
+  display: flex;
+  align-items: center;
+  align-self: stretch;
+  gap: 7px;
+  padding: 0 22px 2px 12px;
+  border: 1px solid #526734;
+  border-top-color: #a3b77e;
+  border-radius: 0 11px 11px 0;
+  box-shadow: inset 0 1px #a3b77e;
+  background: linear-gradient(#879e5d, #607e3e 18%, #405e29 55%, #4e6b31 86%, #2f461f);
+  color: #f6f3df;
+  font: italic bold 22px Tahoma, 'Liberation Sans', sans-serif;
+  text-shadow: 1px 2px #304522;
+  cursor: pointer;
+}
+.start-button img { width: 26px; height: 26px; }
+.start-button:hover, .start-button[aria-expanded='true'] { filter: brightness(1.15); }
+.task-buttons { display: flex; flex: 1; min-width: 0; gap: 4px; overflow-x: auto; scrollbar-width: none; }
+.task-button, .show-desktop, .taskbar-tools button {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 6px;
+  height: 27px;
+  padding: 0 8px;
+  border: 1px solid #202919;
+  border-radius: 3px;
+  color: var(--title-text);
+  background: var(--button-face);
+  box-shadow: var(--bevel);
+  font-size: 11px;
+  cursor: pointer;
+}
+.task-button { width: 128px; flex-shrink: 0; }
+.task-button span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.task-button .xp-icon { width: 17px; height: 17px; }
+.task-button[aria-pressed='true'] { background: #26331e; box-shadow: inset 1px 1px #172311, inset -1px -1px #6d8250; }
+.task-button:hover, .show-desktop:hover, .taskbar-tools button:hover { background: var(--button-hover); transform: none; }
+.show-desktop { padding: 0 5px; margin-right: 4px; }
+.taskbar-tools { display: flex; gap: 3px; margin-left: auto; }
+.taskbar-tools button {
+  position: static;
+  width: 29px;
+  font-size: 19px;
+  padding: 0;
+  justify-content: center;
+  backdrop-filter: none;
+  transition: none;
+}
+.taskbar-tools button[aria-expanded='true'] { background: #25331d; box-shadow: inset 1px 1px #172311; }
+.taskbar-clock {
+  justify-content: center;
+  align-self: stretch;
+  min-width: 116px;
+  padding: 0 13px;
+  gap: 1px;
+  border-left: 1px solid #202919;
+  box-shadow: inset 1px 1px #66794a;
+  background: linear-gradient(#465737, #303e26 18%, #36452a 85%, #25331e);
+}
+.search-clock-time { font-size: 12px; font-weight: normal; color: var(--title-text); }
+.search-clock-date { color: #d3d9c0; font-size: 9px; }
+
+/* Real shortcuts and Start menu entries restore the corresponding window. */
+.desktop-shortcuts {
+  position: fixed;
+  top: 69px;
+  left: 12px;
+  bottom: 28px;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  gap: 17px;
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+.desktop-shortcut {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  width: 85px;
+  min-height: 73px;
+  padding: 5px 2px;
+  border: 1px solid transparent;
+  border-radius: 2px;
+  color: #f6f3df;
+  background: none;
+  text-shadow: 1px 1px 2px #10180e, 0 1px 4px #10180e;
+  font-size: 11px;
+  cursor: pointer;
+}
+.desktop-shortcut .xp-icon { width: 34px; height: 34px; filter: drop-shadow(1px 2px 1px rgb(14 20 12 / 50%)); }
+.desktop-shortcut:hover, .desktop-shortcut:focus-visible { background: rgb(75 94 52 / 55%); border-color: #a0b078; }
+.start-menu {
+  position: fixed;
+  top: 38px;
+  left: 0;
+  width: 370px;
+  max-height: calc(100dvh - 45px);
+  overflow-y: auto;
+  z-index: 220;
+  border: 2px solid #526b38;
+  border-radius: 0 0 6px 6px;
+  background: #252c20;
+  box-shadow: inset 1px 1px #90a06b, 4px 8px 20px rgb(10 17 9 / 45%);
+  color: var(--title-text);
+}
+.start-user { display: flex; align-items: center; gap: 11px; padding: 12px; background: var(--title-bar); font-size: 17px; text-shadow: 1px 1px #2e4121; }
+.start-user img { width: 42px; height: 42px; padding: 4px; border: 1px solid #adb992; border-radius: 4px; background: #d8ddbd; }
+.start-menu-columns { display: grid; grid-template-columns: 1.1fr 1fr; }
+.start-apps { padding: 8px 5px; }
+.start-utilities { padding: 9px 5px; background: #303b25; border-left: 1px solid #4b5c39; }
+.start-menu button:not(.start-button) { display: flex; align-items: center; width: 100%; gap: 9px; padding: 9px 8px; text-align: left; background: none; color: var(--title-text); border: 1px solid transparent; font-size: 12px; cursor: pointer; }
+.start-menu button:hover { background: #526b38; border-color: #788d57; }
+.start-menu .xp-icon { width: 25px; height: 25px; }
+.start-menu hr { border: 0; border-top: 1px solid #546640; margin: 8px; }
+.start-menu-footer { display: flex; align-items: center; gap: 10px; padding: 6px 9px; background: var(--title-bar); font-size: 10px; }
+.start-menu-footer span { white-space: nowrap; }
+.start-menu-footer button { justify-content: flex-end; }
+
+/* Compact, tiled windows leave the cat and the night sky visible. */
+.main-container { max-width: 870px; width: calc(100% - 146px); height: calc(100dvh - 90px); margin: 68px 0 22px 122px; padding: 0; }
+.grid {
+  grid-template-columns: minmax(0, 1.13fr) minmax(0, 1fr);
+  grid-template-rows: 101px minmax(145px, .82fr) minmax(150px, .87fr) minmax(185px, 1fr) 42px;
+  grid-template-areas: 'search search' 'links timezones' 'notes weather' 'news slideshow' 'emoticon quote';
+  gap: 24px;
+  height: 100%;
+}
+.card, .chat-card, .calc-popup, .modal {
+  min-width: 0;
+  min-height: 0;
+  border: 1px solid #6b7e50;
+  border-bottom-color: #172311;
+  border-right-color: #172311;
+  border-radius: 5px 5px 2px 2px;
+  padding: 7px;
+  box-shadow: inset 1px 0 #465638, inset -1px -1px #465638, 2px 3px 8px rgb(10 17 9 / 35%);
+  transition: none;
+}
+.card { display: flex; flex-direction: column; overflow: hidden; }
+.card:focus-within { border-top-color: #bacb90; }
+.card-header, .settings-header, .modal > .modal-title:first-child {
+  flex-shrink: 0;
+  height: 29px;
+  min-height: 29px;
+  padding: 3px 5px;
+  margin: -7px -7px 7px;
+  background: var(--title-bar);
+  border: 0;
+  border-bottom: 1px solid #1e2c17;
+  border-radius: 4px 4px 0 0;
+  color: var(--title-text);
+  box-shadow: inset 1px 0 #8b9c6b, inset -1px 0 #667b48;
+}
+.card-title, .settings-title, .modal-title {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: .78rem;
+  font-weight: bold;
+  color: var(--title-text);
+  text-shadow: 1px 1px #2a3d1b;
+}
+.card-title .xp-icon { width: 18px; height: 18px; }
+.window-actions { display: flex; align-items: center; gap: 4px; }
+.window-minimise, .window-close, .close-btn {
+  width: 21px;
+  height: 20px;
+  padding: 0 0 2px;
+  background: linear-gradient(#85976a, #52683a 48%, #3e522c);
+  border: 1px solid #bbca96;
+  border-radius: 3px;
+  box-shadow: inset 1px 1px #8a9e6a, 1px 1px #2c3e1e;
+  color: #f6f3df;
+  line-height: 15px;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+}
+.window-close, .close-btn { background: linear-gradient(#bb9072, #976348 48%, #794a35); border-color: #d8b194; }
+.window-minimise:hover, .window-close:hover, .close-btn:hover { filter: brightness(1.2); }
+.add-btn { padding: 2px 7px; min-height: 20px; font-size: 10px; }
+.btn, .add-btn, .search-btn, .font-size-btn, .chat-send-btn, .news-tab, .notes-tab, input::file-selector-button {
+  border: 1px solid var(--olive-dark);
+  border-radius: 3px;
+  box-shadow: var(--bevel);
+  background: var(--button-face);
+  color: var(--title-text);
+  transition: background-color 120ms ease-out;
+}
+.btn:hover, .add-btn:hover, .search-btn:hover, .font-size-btn:hover, .chat-send-btn:hover, .news-tab:hover, .notes-tab:hover, input::file-selector-button:hover { background: var(--button-hover); transform: none; }
+.btn:active, .add-btn:active, .search-btn:active { box-shadow: inset 1px 1px #172311; }
+.btn { padding: 7px 13px; font-size: .75rem; }
+.btn-danger { background: linear-gradient(#704c3b, #51392d); border-color: #98735e; }
+.btn-danger:hover { background: #80533e; }
+.btn[style*='background:var(--accent)'] { background: var(--button-face) !important; }
+.btn[style*='background:var(--accent)']:hover { background: var(--button-hover) !important; }
+.search-input, .calc-input, .chat-input, .notes-preview, .notes-textarea, .theme-select,
+.settings-panel input:not([type='range']):not([type='color']):not([type='file']), .settings-panel textarea,
+.modal input, .modal textarea, .modal select, .layout-cell select {
+  border: 1px solid #161f12 !important;
+  border-bottom-color: #596846 !important;
+  border-right-color: #596846 !important;
+  border-radius: 1px !important;
+  box-shadow: inset 1px 1px 2px rgb(12 19 10 / 35%);
+  background: var(--field) !important;
+  color: var(--text-primary);
+  transition: none;
+}
+input:focus-visible, textarea:focus-visible, select:focus-visible {
+  outline: 1px solid var(--accent-hover);
+  outline-offset: 1px;
+  box-shadow: none !important;
+}
+.search-input:focus, .calc-input:focus, .chat-input:focus { border-color: var(--accent) !important; box-shadow: none; }
+select option, .theme-select option, .chat-conv-select option, .modal select option { background: var(--surface); color: var(--text-primary); }
+.search-card { padding: 7px; }
+.search-card .card-header { margin-bottom: 0; }
+.window-toolbar { display: flex; justify-content: space-between; align-items: center; margin: 0 -5px 5px; padding: 3px 6px; border-bottom: 1px solid #46533a; min-height: 24px; color: var(--text-secondary); font-size: 11px; }
+.window-toolbar button { background: none; border: none; color: var(--text-secondary); font-size: 11px; cursor: pointer; }
+.window-toolbar button:hover { color: var(--text-primary); text-decoration: underline; }
+.search-form { gap: 8px; flex: 1; }
+.search-label { font-size: 11px; }
+.search-input { padding: 5px 8px; min-width: 0; font-size: .78rem; height: 28px; }
+.search-btn { height: 28px; padding: 3px 13px; font-size: 11px; font-weight: normal; }
+.search-btn span { margin-left: 3px; color: #cbd9ac; }
+
+.links-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 5px; padding: 4px; }
+.links-grid { overflow-y: auto; min-height: 0; }
+.link-btn { flex-direction: column; gap: 6px; padding: 8px 3px; border: 1px solid transparent; border-radius: 1px; background: none; font-size: .71rem; text-align: center; }
+.link-btn:hover { transform: none; background: color-mix(in oklch, var(--surface), var(--accent) 18%); border-color: #7d9058; }
+.link-icon { display: flex; align-items: center; justify-content: center; width: 30px; height: 28px; font-size: 24px; }
+.link-icon img { width: 23px; height: 23px; image-rendering: auto; }
+.timezone-card, .links-card { max-height: none; }
+.timezone-list { gap: 0; overflow-y: auto; min-height: 0; }
+.timezone-item { padding: 5px 7px; border-radius: 0; background: none; border-bottom: 1px solid color-mix(in oklch, var(--card-border), transparent 50%); }
+.timezone-item:last-child { border-bottom: none; }
+.timezone-info { display: grid; grid-template-columns: 1fr auto; align-items: baseline; column-gap: 10px; }
+.timezone-city { font-size: .73rem; }
+.timezone-time { font-size: .91rem; font-weight: normal; }
+.timezone-date { grid-column: 1 / -1; font-size: .61rem; }
+.remove-btn { font-size: 13px; padding: 3px 5px; }
+.timezone-item:focus-within .remove-btn { opacity: 1; }
+.weather-content { padding: 7px 16px; gap: 18px; }
+.weather-icon { font-size: 2.8rem; }
+.weather-temp { font-size: 2rem; font-weight: normal; }
+.weather-condition { margin-top: 4px; font-size: .76rem; }
+.weather-location, .weather-extra { font-size: .68rem; margin-top: 5px; }
+.notes-tabs { flex-shrink: 0; margin: 0 0 5px; gap: 3px; }
+.notes-tab { font-size: .65rem; padding: 3px 9px; border-radius: 3px 3px 0 0; max-width: 135px; }
+.notes-tab.active, .news-tab.active { color: var(--title-text); background: #536738; box-shadow: inset 0 2px #c0cf94; }
+.notes-preview, .notes-textarea { font-family: 'Liberation Mono', Consolas, monospace; font-size: .75rem; line-height: 1.6; padding: 8px; }
+.save-indicator { font-size: .59rem; min-height: 11px; margin-top: 3px; }
+.news-tabs { gap: 3px; margin-bottom: 5px; }
+.news-tab { border-radius: 3px 3px 0 0; font-size: .66rem; padding: 4px 10px; }
+.news-content { min-height: 0; }
+.news-item { padding: 7px 5px; margin: 0; background: none; border: none; border-bottom: 1px solid color-mix(in oklch, var(--card-border), transparent 50%); border-radius: 0; }
+.news-item:hover { transform: none; background: color-mix(in oklch, var(--surface), var(--accent) 10%); }
+.news-title { font-size: .74rem; line-height: 1.45; }
+.news-meta { font-size: .6rem; margin-top: 3px; }
+.slideshow-container { flex: 1; height: auto; min-height: 0; background: var(--field); border: 1px solid #536044; }
+.slideshow-placeholder { flex-direction: column; gap: 12px; padding: 15px; text-align: center; font-size: .72rem; }
+.slideshow-placeholder .xp-icon { width: 48px; height: 48px; }
+.slide { object-fit: contain; }
+.emoticon-card, .quote-card { flex-direction: row; align-items: center; justify-content: center; background: rgb(33 43 27 / 88%); border: 1px solid #62764a; border-radius: 2px; padding: 5px 12px; box-shadow: inset 1px 1px #394b2c; }
+.emoticon-card { font-family: Tahoma, sans-serif; color: #d6dfb9; font-size: 1.4rem; }
+.emoticon-card:hover { transform: none; box-shadow: inset 1px 1px #5d7343; background: #394b2c; }
+.quote-text { font-size: .67rem; color: #d6dcca; animation: none; }
+
+/* Utility windows use the same title bars and inset controls. */
+.settings-panel {
+  top: 55px;
+  right: 17px;
+  width: 375px;
+  height: calc(100dvh - 74px);
+  padding: 7px 14px 14px;
+  background: var(--surface);
+  backdrop-filter: none;
+  border: 1px solid #819360;
+  border-radius: 5px 5px 2px 2px;
+  box-shadow: 3px 6px 18px rgb(10 17 9 / 50%);
+  transform: translateX(calc(100% + 30px));
+  visibility: hidden;
+  transition: transform 160ms ease-out, visibility 160ms;
+}
+.settings-panel.open { right: 17px; transform: translateX(0); visibility: visible; }
+.settings-header { position: sticky; top: -7px; z-index: 2; margin: -7px -14px 15px; height: 30px; padding: 4px 6px; }
+.settings-title { font-size: .81rem; }
+.settings-section { margin-bottom: 16px; padding-bottom: 16px; }
+.section-title { font-size: .73rem; letter-spacing: 0; text-transform: none; color: var(--accent); margin-bottom: 12px; }
+.setting-label, .slider-value { font-size: .73rem; }
+.settings-panel input[type='color'] { width: 37px; height: 24px; padding: 2px; background: var(--field); border: 1px solid #718354; }
+input[type='range'] { height: 5px; accent-color: #aabd80; background: #161f12; border-bottom: 1px solid #64794b; }
+input[type='range']::-moz-range-thumb { width: 10px; height: 17px; background: var(--button-face); border: 1px solid #9cae79; border-radius: 2px; }
+input[type='range']::-webkit-slider-thumb { width: 12px; height: 18px; background: var(--button-face); border: 1px solid #9cae79; border-radius: 2px; }
+input[type='file'] { border: 1px solid #52623e; border-radius: 1px; font-size: .7rem; padding: 7px; }
+input::file-selector-button { padding: 4px 8px; margin-right: 7px; cursor: pointer; }
+.font-size-btn { width: 26px; height: 25px; font-size: .9rem; }
+.theme-select { font-size: .75rem; padding: 7px; }
+.modal { background: var(--surface); padding: 12px; border-radius: 5px 5px 2px 2px; max-height: calc(100dvh - 70px); overflow-y: auto; }
+.modal > .modal-title:first-child { margin: -12px -12px 13px; padding: 5px 8px; }
+.modal-title:not(:first-child) { color: var(--text-primary); text-shadow: none; }
+.modal-overlay { background: rgb(10 17 9 / 55%); }
+.calc-popup { top: 55px; bottom: auto; right: 155px; background: var(--surface); backdrop-filter: none; gap: 7px; }
+.calc-input { font-size: .9rem; padding: 8px; }
+.calc-result { font-size: 1.2rem; }
+.chat-card { top: 55px; bottom: auto; right: 130px; width: 430px; height: min(510px, calc(100dvh - 80px)); background: var(--surface); backdrop-filter: none; }
+.chat-conv-select { background: #344728; border: 1px solid #899e64; border-radius: 2px; font-size: .7rem; }
+.chat-input { min-width: 0; }
+.chat-message { border-radius: 2px; font-size: .76rem; }
+.chat-message.user { background: #475d31; color: #f6f3df; }
+.chat-message.assistant { background: var(--field); }
+.chat-message blockquote { border: 1px solid var(--card-border); padding: 5px 8px; }
+.chat-send-btn { font-size: .72rem; padding: 5px 10px; }
+.chat-attach-btn, .chat-voice-btn { font-size: 14px; }
+.chat-header-actions .add-btn { padding: 2px 5px; }
+.chat-card .card-header { gap: 8px; }
+.storage-info { font-size: .65rem; line-height: 1.5; }
+.layout-cell select.duplicate { outline: 2px solid #d49a80; }
+.desktop-revealed .emoticon-card, .desktop-revealed .quote-card { visibility: hidden; }
+
+@media (min-width: 1600px) {
+  .main-container { width: calc(51vw - 110px); max-width: 870px; margin-left: 138px; margin-top: 79px; height: calc(100dvh - 109px); }
+  .grid { gap: 28px; }
+}
+@media (max-width: 1100px), (max-height: 780px) {
+  body { overflow-y: auto; }
+  .main-container { height: auto; min-height: calc(100dvh - 90px); max-width: 760px; }
+  .grid { height: auto; grid-template-rows: 101px 185px 210px 235px 50px; }
+  .task-button { width: 104px; }
+}
+@media (max-width: 900px) {
+  .main-container { margin-left: 106px; width: calc(100% - 125px); }
+  .grid { gap: 18px; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .desktop-shortcuts { left: 5px; }
+  .taskbar-clock { min-width: 83px; padding: 0 7px; }
+  .taskbar-clock .search-clock-date { display: none; }
+  .links-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .weather-content { padding: 4px; gap: 8px; }
+  .weather-icon { font-size: 2rem; }
+}
+@media (max-width: 600px) {
+  .desktop-taskbar { gap: 4px; }
+  .start-button { font-size: 19px; padding-right: 12px; padding-left: 7px; gap: 4px; }
+  .start-button img { width: 23px; height: 23px; }
+  .show-desktop { display: none; }
+  .task-button { width: 31px; justify-content: center; padding: 0; }
+  .task-button span { display: none; }
+  .taskbar-tools { gap: 2px; }
+  .taskbar-tools button { width: 25px; }
+  .taskbar-clock { min-width: 66px; padding: 0 4px; }
+  .search-clock-time { font-size: 10px; }
+  .desktop-shortcuts { position: relative; inset: auto; margin: 51px 10px 13px; flex-direction: row; gap: 6px; overflow-x: auto; }
+  .desktop-shortcut { min-width: 65px; width: 65px; min-height: 65px; font-size: 9px; }
+  .desktop-shortcut .xp-icon { width: 28px; height: 28px; }
+  .main-container { margin: 0 12px 20px; width: calc(100% - 24px); min-height: 0; }
+  .grid { grid-template-columns: minmax(0, 1fr); grid-template-rows: 101px repeat(6, minmax(180px, auto)) 45px 45px; gap: 18px; }
+  .card { min-height: 180px; }
+  .search-card { min-height: 101px; }
+  .notes-card, .news-card, .slideshow-card { height: 250px; }
+  .emoticon-card, .quote-card { min-height: 45px; }
+  .links-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .start-menu { width: min(370px, 100%); }
+  .settings-panel, .settings-panel.open { right: 8px; width: calc(100% - 16px); }
+  .chat-card { inset: 49px 8px 12px !important; }
+  .calc-popup { top: 49px; left: 8px; right: 8px; }
+  .modal { width: calc(100% - 20px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition: none !important; animation: none !important; scroll-behavior: auto !important; }
+}

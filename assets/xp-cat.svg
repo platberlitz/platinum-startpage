@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+  <path d="M3 11L3 3Q3 1 5 3L9 6Q12 5 15 6L19 3Q21 1 21 4L21 11Q23 21 12 22Q1 21 3 11Z" fill="#fff0cf" stroke="#586c35" stroke-width="1.2"/>
+  <path d="M5 5L8 8L5 10ZM19 5L16 8L19 10Z" fill="#dfac98"/>
+  <path d="M10 6L11 10L12 6M14 6L13 10" fill="none" stroke="#d6a964" stroke-width="1.4"/>
+  <ellipse cx="8" cy="13" rx="1.1" ry="1.5" fill="#42502b"/>
+  <ellipse cx="16" cy="13" rx="1.1" ry="1.5" fill="#42502b"/>
+  <path d="M10.5 16L13.5 16L12 17.5Z" fill="#c7817a"/>
+  <path d="M12 17.5Q10 20 9 18M12 17.5Q14 20 15 18M6 16L1 15M6 18L1 19M18 16L23 15M18 18L23 19" fill="none" stroke="#756848" stroke-width=".8" stroke-linecap="round"/>
+</svg>
